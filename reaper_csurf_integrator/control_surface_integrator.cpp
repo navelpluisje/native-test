@@ -651,7 +651,7 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
         int size = tokenLines[i].size();
         
         string widgetClass = tokenLines[i][0];
-
+        
         // Control Signal Generators
         if(widgetClass == "AnyPress" && (size == 4 || size == 7))
             new AnyPress_Midi_CSIMessageGenerator(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
@@ -698,7 +698,7 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
         {
             feedbackProcessor = new FPTwoStateRGB_Midi_FeedbackProcessor(surface, widget, new MIDI_event_ex_t(strToHex(tokenLines[i][1]), strToHex(tokenLines[i][2]), strToHex(tokenLines[i][3])));
         }
-        else if(widgetClass == "FB_FaderportValueBar"  && size == 2)
+        else if(widgetClass == "FB_FPValueBar"  && size == 2)
         {
                 feedbackProcessor = new FPValueBar_Midi_FeedbackProcessor(surface, widget, stoi(tokenLines[i][1]));
         }
@@ -800,6 +800,14 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
                 feedbackProcessor = new MCUDisplay_Midi_FeedbackProcessor(surface, widget, 1, 0x17, stoi(tokenLines[i][1]) + 0x30, stoi(tokenLines[i][2]));
         }
         
+        else if((widgetClass == "FB_FP8ScribbleStripMode" || widgetClass == "FB_FP16ScribbleStripMode") && size == 2)
+        {
+            if(widgetClass == "FB_FP8ScribbleStripMode")
+                feedbackProcessor = new FPScribbleStripMode_Midi_FeedbackProcessor(surface, widget, 0x02, stoi(tokenLines[i][1]));
+            else if(widgetClass == "FB_FP16ScribbleStripMode")
+                feedbackProcessor = new FPScribbleStripMode_Midi_FeedbackProcessor(surface, widget, 0x16, stoi(tokenLines[i][1]));
+        }
+
         else if((widgetClass == "FB_FP8ScribbleLine1" || widgetClass == "FB_FP16ScribbleLine1"
                  || widgetClass == "FB_FP8ScribbleLine2" || widgetClass == "FB_FP16ScribbleLine2"
                  || widgetClass == "FB_FP8ScribbleLine3" || widgetClass == "FB_FP16ScribbleLine3"

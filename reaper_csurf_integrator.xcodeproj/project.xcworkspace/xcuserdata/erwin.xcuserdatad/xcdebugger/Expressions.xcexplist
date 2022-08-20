@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "Manager::Init():control_surface_integrator.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "pages_[currentPageIndex_]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "FPDisplay_Midi_FeedbackProcessor::SetScribbleLineParams():control_surface_midi_widgets.h">
+         <PersistentStrings>
+            <PersistentString
+               value = "lastStringSent_">
+            </PersistentString>
+            <PersistentString
+               value = "modeParams_">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
