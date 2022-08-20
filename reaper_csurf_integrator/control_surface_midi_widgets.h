@@ -1102,11 +1102,16 @@ class FPScribbleStripMode_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 private:
     int displayType_ = 0x02;
     int channel_ = 0;
+    string lastModeParams_ = "";
 
     int GetScribbleStripMode()
     {
-        int param = stoi(modeParams_);
-        if (modeParams_ != "" && param >= 0 && param < 6)
+        int param = 2;
+
+        if (modeParams_ != "")
+            param = stoi(modeParams_);
+
+        if (param >= 0 && param < 9)
             return param;
         
         return 2;
@@ -1115,8 +1120,17 @@ public:
     virtual ~FPScribbleStripMode_Midi_FeedbackProcessor() {}
     FPScribbleStripMode_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channel) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channel_(channel) { }
     
+    virtual void SetValue(double value) override
+    {
+        if (lastModeParams_ == modeParams_)
+            return;
+            
+        ForceValue(value);
+    }
+    
     virtual void ForceValue(double value) override
     {
+        lastModeParams_ = modeParams_;
         struct
         {
             MIDI_event_ex_t evt;
