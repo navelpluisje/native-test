@@ -362,10 +362,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
                             zone = make_shared<Zone>(zoneManager, navigators[i], i, expandedTouchIds, zoneName, zoneAlias, filePath, includedZones, associatedZones);
                         else
                             zone = make_shared<SubZone>(zoneManager, navigators[i], i, expandedTouchIds, zoneName, zoneAlias, filePath, includedZones, associatedZones, enclosingZone);
-                        
-                        if(subZones.size() > 0)
-                            zone->InitSubZones(subZones, zone);
-                        
+                                                
                         if(zoneName == "Home")
                             zoneManager->SetHomeZone(zone);
                         
@@ -381,6 +378,9 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
                             if(navigators.size() > 1)
                                 surfaceWidgetName = regex_replace(surfaceWidgetName, regex("[|]"), to_string(i + 1));
                             
+                            if(enclosingZone != nullptr && enclosingZone->GetChannelNumber() != 0)
+                                surfaceWidgetName = regex_replace(surfaceWidgetName, regex("[|]"), to_string(enclosingZone->GetChannelNumber()));
+                            
                             Widget* widget = zoneManager->GetSurface()->GetWidgetByName(surfaceWidgetName);
                                                         
                             if(widget == nullptr)
@@ -393,11 +393,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
                                 for(auto action : actions)
                                 {
                                     string actionName = regex_replace(action->actionName, regex("[|]"), numStr);
-                                    
-                                    if(actionName == ShiftToken || actionName == OptionToken || actionName == ControlToken
-                                       || actionName == AltToken || actionName == FlipToken || actionName == ToggleChannelToken)
-                                        widget->SetIsModifier();
-                                        
+
                                     vector<string> memberParams;
                                     for(int j = 0; j < action->params.size(); j++)
                                         memberParams.push_back(regex_replace(action->params[j], regex("[|]"), numStr));
@@ -416,6 +412,9 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
                                 }
                             }
                         }
+                        
+                        if(subZones.size() > 0)
+                            zone->InitSubZones(subZones, zone);
                     }
                                     
                     includedZones.clear();
@@ -803,14 +802,6 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
             else if(widgetClass == "FB_C4DisplayLower")
                 feedbackProcessor = new MCUDisplay_Midi_FeedbackProcessor(surface, widget, 1, 0x17, stoi(tokenLines[i][1]) + 0x30, stoi(tokenLines[i][2]));
         }
-        
-        else if((widgetClass == "FB_FP8ScribbleStripMode" || widgetClass == "FB_FP16ScribbleStripMode") && size == 2)
-        {
-            if(widgetClass == "FB_FP8ScribbleStripMode")
-                feedbackProcessor = new FPScribbleStripMode_Midi_FeedbackProcessor(surface, widget, 0x02, stoi(tokenLines[i][1]));
-            else if(widgetClass == "FB_FP16ScribbleStripMode")
-                feedbackProcessor = new FPScribbleStripMode_Midi_FeedbackProcessor(surface, widget, 0x16, stoi(tokenLines[i][1]));
-        }
 
         else if((widgetClass == "FB_FP8ScribbleLine1" || widgetClass == "FB_FP16ScribbleLine1"
                  || widgetClass == "FB_FP8ScribbleLine2" || widgetClass == "FB_FP16ScribbleLine2"
@@ -835,7 +826,13 @@ static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, ve
             else if(widgetClass == "FB_FP16ScribbleLine4")
                 feedbackProcessor = new FPDisplay_Midi_FeedbackProcessor(surface, widget, 0x16, stoi(tokenLines[i][1]), 0x03);
         }
-        
+        else if((widgetClass == "FB_FP8ScribbleStripMode" || widgetClass == "FB_FP16ScribbleStripMode") && size == 2)
+        {
+            if(widgetClass == "FB_FP8ScribbleStripMode")
+                feedbackProcessor = new FPScribbleStripMode_Midi_FeedbackProcessor(surface, widget, 0x02, stoi(tokenLines[i][1]));
+            else if(widgetClass == "FB_FP16ScribbleStripMode")
+                feedbackProcessor = new FPScribbleStripMode_Midi_FeedbackProcessor(surface, widget, 0x16, stoi(tokenLines[i][1]));
+        }
         else if((widgetClass == "FB_QConLiteDisplayUpper" || widgetClass == "FB_QConLiteDisplayUpperMid" || widgetClass == "FB_QConLiteDisplayLowerMid" || widgetClass == "FB_QConLiteDisplayLower") && size == 2)
         {
             if(widgetClass == "FB_QConLiteDisplayUpper")
@@ -1629,6 +1626,17 @@ int Zone::GetSlotIndex()
     else return slotIndex_;
 }
 
+int Zone::GetChannelNumber()
+{
+    int channelNumber = 0;
+    
+    for(auto [widget, isUsed] : widgets_)
+        if(channelNumber < widget->GetChannelNumber())
+            channelNumber = widget->GetChannelNumber();
+    
+    return channelNumber;
+}
+
 Zone::Zone(ZoneManager* const zoneManager, Navigator* navigator, int slotIndex, map<string, string> touchIds, string name, string alias, string sourceFilePath, vector<string> includedZones, vector<string> associatedZones): zoneManager_(zoneManager), navigator_(navigator), slotIndex_(slotIndex), touchIds_(touchIds), name_(name), alias_(alias), sourceFilePath_(sourceFilePath)
 {
     if(name == "Home")
@@ -1927,9 +1935,7 @@ vector<shared_ptr<ActionContext>> &Zone::GetActionContexts(Widget* widget)
     string widgetName = widget->GetName();
     bool isToggled = widget->GetSurface()->GetIsChannelToggled(widget->GetChannelNumber());
     
-    string modifier = "";
-    if( ! widget->GetIsModifier())
-        modifier = widget->GetSurface()->GetPage()->GetModifier();
+    string modifier = widget->GetSurface()->GetPage()->GetModifier();
     
     if(isToggled && (touchIds_.count(widgetName) > 0 && activeTouchIds_.count(touchIds_[widgetName]) > 0 && activeTouchIds_[touchIds_[widgetName]] == true && actionContextDictionary_[widget].count(touchIds_[widgetName] + "+" + modifier + "Toggle+")) > 0)
         return actionContextDictionary_[widget][touchIds_[widgetName] + "+" + modifier + "Toggle+"];
