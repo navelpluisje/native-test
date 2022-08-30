@@ -21,5 +21,24 @@
             </PersistentString>
          </PersistentStrings>
       </ContextState>
+      <ContextState
+         contextName = "ProcessZoneFile(std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, ZoneManager*, std::__1::vector&lt;Navigator*, std::__1::allocator&lt;Navigator*&gt; &gt;&amp;, std::__1::vector&lt;std::__1::shared_ptr&lt;Zone&gt;, std::__1::allocator&lt;std::__1::shared_ptr&lt;Zone&gt; &gt; &gt;&amp;, std::__1::shared_ptr&lt;Zone&gt;):control_surface_integrator.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "zone">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "Zone::InitSubZones(std::__1::vector&lt;std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, std::__1::allocator&lt;std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt; &gt; &gt;, std::__1::shared_ptr&lt;Zone&gt;):control_surface_integrator.cpp">
+         <PersistentStrings>
+            <PersistentString
+               value = "GetNavigator()">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ZoneManager::GetZoneFilePaths():control_surface_integrator.h">
+      </ContextState>
    </ContextStates>
 </VariablesViewState>

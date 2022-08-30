@@ -42,8 +42,7 @@
       allowLocationSimulation = "YES">
       <PathRunnable
          runnableDebuggingMode = "0"
-         BundleIdentifier = "com.cockos.reaper"
-         FilePath = "/Users/erwin/Projects/TEST/REAPER.app">
+         FilePath = "/Users/erwin/Projects/TEST_v2/REAPER.app">
       </PathRunnable>
    </LaunchAction>
    <ProfileAction
