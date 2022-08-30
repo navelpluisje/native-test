@@ -25,12 +25,14 @@ public:
     PressRelease_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* press) : Midi_CSIMessageGenerator(widget), press_(press)
     {
         surface->AddCSIMessageGenerator(press->midi_message[0] * 0x10000 + press->midi_message[1] * 0x100 + press->midi_message[2], this);
+        widget->SetMessageGeneratorClass("PressRelease_Midi_CSIMessageGenerator");
     }
     
     PressRelease_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* press, MIDI_event_ex_t* release) : Midi_CSIMessageGenerator(widget), press_(press), release_(release)
     {
         surface->AddCSIMessageGenerator(press->midi_message[0] * 0x10000 + press->midi_message[1] * 0x100 + press->midi_message[2], this);
         surface->AddCSIMessageGenerator(release->midi_message[0] * 0x10000 + release->midi_message[1] * 0x100 + release->midi_message[2], this);
+        widget->SetMessageGeneratorClass("PressRelease_Midi_CSIMessageGenerator");
     }
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
@@ -54,6 +56,7 @@ public:
     {
         surface->AddCSIMessageGenerator(press->midi_message[0] * 0x10000 + press->midi_message[1] * 0x100 + press->midi_message[2], this);
         surface->AddCSIMessageGenerator(release->midi_message[0] * 0x10000 + release->midi_message[1] * 0x100 + release->midi_message[2], this);
+        widget->SetMessageGeneratorClass("Touch_Midi_CSIMessageGenerator");
     }
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
@@ -75,6 +78,7 @@ public:
     AnyPress_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* press) : Midi_CSIMessageGenerator(widget), press_(press)
     {
         surface->AddCSIMessageGenerator(press->midi_message[0] * 0x10000 + press->midi_message[1] * 0x100, this);
+        widget->SetMessageGeneratorClass("AnyPress_Midi_CSIMessageGenerator");
     }
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
@@ -93,6 +97,7 @@ public:
     Fader14Bit_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* message) : Midi_CSIMessageGenerator(widget)
     {
         surface->AddCSIMessageGenerator(message->midi_message[0] * 0x10000, this);
+        widget->SetMessageGeneratorClass("Fader14Bit_Midi_CSIMessageGenerator");
     }
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
@@ -110,6 +115,7 @@ public:
     Fader7Bit_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* message) : Midi_CSIMessageGenerator(widget)
     {
         surface->AddCSIMessageGenerator(message->midi_message[0] * 0x10000 + message->midi_message[1] * 0x100, this);
+        widget->SetMessageGeneratorClass("Fader7Bit_Midi_CSIMessageGenerator");
     }
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
@@ -131,6 +137,7 @@ public:
     AcceleratedEncoder_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* message, vector<string> params) : Midi_CSIMessageGenerator(widget)
     {
         surface->AddCSIMessageGenerator(message->midi_message[0] * 0x10000 + message->midi_message[1] * 0x100, this);
+        widget->SetMessageGeneratorClass("AcceleratedEncoder_Midi_CSIMessageGenerator");
         
         auto openSquareBrace = find(params.begin(), params.end(), "[");
         auto closeCurlyBrace = find(params.begin(), params.end(), "]");
@@ -249,6 +256,7 @@ public:
     MFT_AcceleratedEncoder_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* message, vector<string> params) : Midi_CSIMessageGenerator(widget)
     {
         surface->AddCSIMessageGenerator(message->midi_message[0] * 0x10000 + message->midi_message[1] * 0x100, this);
+        widget->SetMessageGeneratorClass("MFT_AcceleratedEncoder_Midi_CSIMessageGenerator");
     
         accelerationIndicesForDecrement_[0x3f] = 0;
         accelerationIndicesForDecrement_[0x3e] = 1;
@@ -294,6 +302,7 @@ public:
     Encoder_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* message) : Midi_CSIMessageGenerator(widget)
     {
         surface->AddCSIMessageGenerator(message->midi_message[0] * 0x10000 + message->midi_message[1] * 0x100, this);
+        widget->SetMessageGeneratorClass("Encoder_Midi_CSIMessageGenerator");
     }
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
@@ -318,6 +327,7 @@ public:
     EncoderPlain_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* message) : Midi_CSIMessageGenerator(widget)
     {
         surface->AddCSIMessageGenerator(message->midi_message[0] * 0x10000 + message->midi_message[1] * 0x100, this);
+        widget->SetMessageGeneratorClass("EncoderPlain_Midi_CSIMessageGenerator");
     }
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
@@ -343,6 +353,7 @@ public:
     Encoder7Bit_Midi_CSIMessageGenerator(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* message) : Midi_CSIMessageGenerator(widget)
     {
         surface->AddCSIMessageGenerator(message->midi_message[0] * 0x10000 + message->midi_message[1] * 0x100, this);
+        widget->SetMessageGeneratorClass("Encoder7Bit_Midi_CSIMessageGenerator");
     }
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t* midiMessage) override
@@ -370,6 +381,8 @@ class TwoState_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 public:
     virtual ~TwoState_Midi_FeedbackProcessor() {}
     TwoState_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1, MIDI_event_ex_t* feedback2) : Midi_FeedbackProcessor(surface, widget, feedback1, feedback2) { }
+    
+    virtual string GetName() override { return "TwoState_Midi_FeedbackProcessor"; }
     
     virtual void SetValue(double value) override
     {
@@ -412,6 +425,8 @@ public:
     virtual ~FPTwoStateRGB_Midi_FeedbackProcessor() {}
     FPTwoStateRGB_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : Midi_FeedbackProcessor(surface, widget, feedback1) { }
     
+    virtual string GetName() override { return "FPTwoStateRGB_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double active) override
     {
         active_ = active;
@@ -460,6 +475,8 @@ public:
     virtual ~NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor() {}
     NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : Midi_FeedbackProcessor(surface, widget, feedback1) { }
     
+    virtual string GetName() override { return "NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor"; }
+
     virtual void SetRGBValue(int r, int g, int b) override
     {
         if(r == lastR && g == lastG && b == lastB)
@@ -515,6 +532,8 @@ public:
     virtual ~FaderportRGB_Midi_FeedbackProcessor() {}
     FaderportRGB_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : Midi_FeedbackProcessor(surface, widget, feedback1) { }
     
+    virtual string GetName() override { return "FaderportRGB_Midi_FeedbackProcessor"; }
+    
     virtual void SetRGBValue(int r, int g, int b) override
     {
         if(r == lastR_ && g == lastG_ && b == lastB_)
@@ -544,6 +563,8 @@ public:
     virtual ~Fader14Bit_Midi_FeedbackProcessor() {}
     Fader14Bit_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : Midi_FeedbackProcessor(surface, widget, feedback1) { }
     
+    virtual string GetName() override { return "Fader14Bit_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         int volint = value * 16383.0;
@@ -565,6 +586,8 @@ public:
     virtual ~Fader7Bit_Midi_FeedbackProcessor() {}
     Fader7Bit_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : Midi_FeedbackProcessor(surface, widget, feedback1) { }
     
+    virtual string GetName() override { return "Fader7Bit_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], value * 127.0);
@@ -584,6 +607,8 @@ public:
     virtual ~Encoder_Midi_FeedbackProcessor() {}
     Encoder_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : Midi_FeedbackProcessor(surface, widget, feedback1) { }
     
+    virtual string GetName() override { return "Encoder_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1] + 0x20, GetMidiValue(value));
@@ -627,6 +652,8 @@ public:
     virtual ~ConsoleOneVUMeter_Midi_FeedbackProcessor() {}
     ConsoleOneVUMeter_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : Midi_FeedbackProcessor(surface, widget, feedback1) { }
     
+    virtual string GetName() override { return "ConsoleOneVUMeter_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], GetMidiValue(value));
@@ -664,6 +691,8 @@ public:
     virtual ~ConsoleOneGainReductionMeter_Midi_FeedbackProcessor() {}
     ConsoleOneGainReductionMeter_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t* feedback1) : Midi_FeedbackProcessor(surface, widget, feedback1) { }
     
+    virtual string GetName() override { return "ConsoleOneGainReductionMeter_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], fabs(1.0 - value) * 127.0);
@@ -688,6 +717,8 @@ public:
     virtual ~QConProXMasterVUMeter_Midi_FeedbackProcessor() {}
     QConProXMasterVUMeter_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int param) : Midi_FeedbackProcessor(surface, widget), param_(param) { }
     
+    virtual string GetName() override { return "QConProXMasterVUMeter_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         //Master Channel:
@@ -737,6 +768,8 @@ public:
     virtual ~MCUVUMeter_Midi_FeedbackProcessor() {}
     MCUVUMeter_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channelNumber) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channelNumber_(channelNumber) {}
     
+    virtual string GetName() override { return "MCUVUMeter_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         SendMidiMessage(0xd0, (channelNumber_ << 4) | GetMidiValue(value), 0);
@@ -771,6 +804,8 @@ public:
     virtual ~FPVUMeter_Midi_FeedbackProcessor() {}
     FPVUMeter_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int channelNumber) : Midi_FeedbackProcessor(surface, widget), channelNumber_(channelNumber) {}
     
+    virtual string GetName() override { return "FPVUMeter_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         if(lastMidiValue_ == value || GetMidiValue(value) < 7)
@@ -834,6 +869,8 @@ public:
     virtual ~FPValueBar_Midi_FeedbackProcessor() {}
     FPValueBar_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int channel) : Midi_FeedbackProcessor(surface, widget), channel_(channel) { }
 
+    virtual string GetName() override { return "FPValueBar_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         if(value == lastValue_ && modeParams_ == lastModeParams_)
@@ -874,7 +911,9 @@ private:
 public:
     virtual ~MCUDisplay_Midi_FeedbackProcessor() {}
     MCUDisplay_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayUpperLower, int displayType, int displayRow, int channel) : Midi_FeedbackProcessor(surface, widget), offset_(displayUpperLower * 56), displayType_(displayType), displayRow_(displayRow), channel_(channel) { }
-        
+    
+    virtual string GetName() override { return "MCUDisplay_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(string displayText) override
     {
         if(displayText != lastStringSent_) // changes since last send
@@ -938,11 +977,45 @@ private:
     int displayType_ = 0x10;
     int displayRow_ = 0x12;
     int channel_ = 0;
+    int preventUpdateTrackColors_ = false;
     string lastStringSent_ = "";
     vector<rgb_color> currentTrackColors_;
-    
-    void ForceUpdateTrackColors()
+        
+public:
+    virtual ~XTouchDisplay_Midi_FeedbackProcessor() {}
+    XTouchDisplay_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayUpperLower, int displayType, int displayRow, int channel) : Midi_FeedbackProcessor(surface, widget), offset_(displayUpperLower * 56), displayType_(displayType), displayRow_(displayRow), channel_(channel)
     {
+        rgb_color color;
+        
+        for(int i = 0; i < surface_->GetNumChannels(); i++)
+            currentTrackColors_.push_back(color);
+        
+        surface_->AddTrackColorFeedbackProcessor(this);
+    }
+        
+    virtual string GetName() override { return "XTouchDisplay_Midi_FeedbackProcessor"; }
+
+    virtual void SetAllDisplaysColor(string color) override
+    {
+        preventUpdateTrackColors_ = true;
+        
+        int surfaceColor = 0;
+        
+        if(color == "Red")
+            surfaceColor = 1;
+        else if(color == "Green")
+            surfaceColor = 2;
+        else if(color == "Yellow")
+            surfaceColor = 3;
+        else if(color == "Blue")
+            surfaceColor = 4;
+        else if(color == "Magenta")
+            surfaceColor = 5;
+        else if(color == "Cyan")
+            surfaceColor = 6;
+        else if(color == "White")
+            surfaceColor = 7;
+        
         struct
         {
             MIDI_event_ex_t evt;
@@ -956,67 +1029,20 @@ private:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x66;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayType_;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x72;
-
+        
         for(int i = 0; i < surface_->GetNumChannels(); i++)
-        {
-            if(lastStringSent_ == "")
-            {
-                midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
-            }
-            else
-            {
-                if(MediaTrack* track = surface_->GetPage()->GetNavigatorForChannel(i + surface_->GetChannelOffset())->GetTrack())
-                {
-                    rgb_color color = DAW::GetTrackColor(track);
-                    
-                    currentTrackColors_[i] = color;
-                    
-                    int r = color.r;
-                    int g = color.g;
-                    int b = color.b;
-
-                    int surfaceColor = 0;
-                    
-                    if(abs(r - g) < 30 && abs(r - b) < 30 && abs(g - b) < 30)  // White
-                        surfaceColor = 7;
-                    else if(abs(r - g) < 30 && r > b && g > b)  // Yellow r + g
-                        surfaceColor = 3;
-                    else if(abs(r - b) < 30 && r > g && b > g)  // Purple r + b
-                        surfaceColor = 5;
-                    else if(abs(g - b) < 30 && g > r && b > r)  // Cyan g + b
-                        surfaceColor = 6;
-                    else if(r > g && r > b) // Red
-                        surfaceColor = 1;
-                    else if(g > r && g > b) // Green
-                        surfaceColor = 2;
-                    else if(b > r && b > g) // Blue
-                        surfaceColor = 4;
-
-
-                    midiSysExData.evt.midi_message[midiSysExData.evt.size++] = surfaceColor;
-                }
-                else
-                    midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
-            }
-        }
-
+            midiSysExData.evt.midi_message[midiSysExData.evt.size++] = surfaceColor;
+        
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
         
         SendMidiMessage(&midiSysExData.evt);
     }
     
-public:
-    virtual ~XTouchDisplay_Midi_FeedbackProcessor() {}
-    XTouchDisplay_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayUpperLower, int displayType, int displayRow, int channel) : Midi_FeedbackProcessor(surface, widget), offset_(displayUpperLower * 56), displayType_(displayType), displayRow_(displayRow), channel_(channel)
+    virtual void RestoreAllDisplaysColor() override
     {
-        rgb_color color;
-        
-        for(int i = 0; i < surface_->GetNumChannels(); i++)
-            currentTrackColors_.push_back(color);
-        
-        surface_->AddTrackColorFeedbackProcessor(this);
+        preventUpdateTrackColors_ = false;
     }
-        
+    
     virtual void SetValue(string displayText) override
     {
         if(displayText != lastStringSent_) // changes since last send
@@ -1092,6 +1118,73 @@ public:
         
         if(shouldUpdate)
             ForceUpdateTrackColors();
+    }
+    
+    virtual void ForceUpdateTrackColors() override
+    {
+        if(preventUpdateTrackColors_)
+            return;
+        
+        struct
+        {
+            MIDI_event_ex_t evt;
+            char data[512];
+        } midiSysExData;
+        midiSysExData.evt.frame_offset=0;
+        midiSysExData.evt.size=0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x66;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayType_;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x72;
+
+        for(int i = 0; i < surface_->GetNumChannels(); i++)
+        {
+            if(lastStringSent_ == "")
+            {
+                midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+            }
+            else
+            {
+                if(MediaTrack* track = surface_->GetPage()->GetNavigatorForChannel(i + surface_->GetChannelOffset())->GetTrack())
+                {
+                    rgb_color color = DAW::GetTrackColor(track);
+                    
+                    currentTrackColors_[i] = color;
+                    
+                    int r = color.r;
+                    int g = color.g;
+                    int b = color.b;
+
+                    int surfaceColor = 0;
+                    
+                    if(abs(r - g) < 30 && abs(r - b) < 30 && abs(g - b) < 30)  // White
+                        surfaceColor = 7;
+                    else if(abs(r - g) < 30 && r > b && g > b)  // Yellow r + g
+                        surfaceColor = 3;
+                    else if(abs(r - b) < 30 && r > g && b > g)  // Magenta r + b
+                        surfaceColor = 5;
+                    else if(abs(g - b) < 30 && g > r && b > r)  // Cyan g + b
+                        surfaceColor = 6;
+                    else if(r > g && r > b) // Red
+                        surfaceColor = 1;
+                    else if(g > r && g > b) // Green
+                        surfaceColor = 2;
+                    else if(b > r && b > g) // Blue
+                        surfaceColor = 4;
+
+
+                    midiSysExData.evt.midi_message[midiSysExData.evt.size++] = surfaceColor;
+                }
+                else
+                    midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+            }
+        }
+
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
+        
+        SendMidiMessage(&midiSysExData.evt);
     }
 };
 
@@ -1189,6 +1282,8 @@ public:
     virtual ~FPDisplay_Midi_FeedbackProcessor() {}
     FPDisplay_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channel, int displayRow) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channel_(channel), displayRow_(displayRow) { }
     
+    virtual string GetName() override { return "FPDisplay_Midi_FeedbackProcessor"; }
+
     virtual void ClearCache() override
     {
         lastStringSent_ = " ";
@@ -1284,6 +1379,8 @@ public:
     virtual ~FPScribbleStripMode_Midi_FeedbackProcessor() {}
     FPScribbleStripMode_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channel) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channel_(channel) { }
     
+    virtual string GetName() override { return "FPScribbleStripMode_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         if (lastModeParams_ == modeParams_)
@@ -1335,6 +1432,8 @@ public:
     virtual ~QConLiteDisplay_Midi_FeedbackProcessor() {}
     QConLiteDisplay_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayUpperLower, int displayType, int displayRow, int channel) : Midi_FeedbackProcessor(surface, widget), offset_(displayUpperLower * 28), displayType_(displayType), displayRow_(displayRow), channel_(channel) { }
     
+    virtual string GetName() override { return "QConLiteDisplay_Midi_FeedbackProcessor"; }
+
     virtual void ClearCache() override
     {
         lastStringSent_ = " ";
@@ -1579,6 +1678,8 @@ protected:
     
     SCE24_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int cellNumber, int itemNumber) : Midi_FeedbackProcessor(surface, widget), cellNumber_(cellNumber), itemNumber_(itemNumber) {}
 
+    virtual string GetName() override { return "SCE24_Midi_FeedbackProcessor"; }
+
     virtual void SetCurrentColor(double value) override
     {
         currentColor_ = value == 0 ? backgroundColor_ : foregroundColor_;
@@ -1664,7 +1765,9 @@ private:
 public:
     virtual ~SCE24_Text_Midi_FeedbackProcessor() {}
     SCE24_Text_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int cellNumber, int itemNumber) : SCE24_Midi_FeedbackProcessor(surface, widget, cellNumber, itemNumber) { }
-    
+ 
+    virtual string GetName() override { return "SCE24_Text_Midi_FeedbackProcessor"; }
+
     virtual int GetMaxCharacters() override
     {
         return maxChars.GetMaxCharacters(displayType_, itemNumber_);
@@ -1758,7 +1861,9 @@ class SCE24_Bar_Midi_FeedbackProcessor : public SCE24_Midi_FeedbackProcessor
 public:
     virtual ~SCE24_Bar_Midi_FeedbackProcessor() {}
     SCE24_Bar_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int cellNumber, int itemNumber) : SCE24_Midi_FeedbackProcessor(surface, widget, cellNumber, itemNumber) { }
-       
+     
+    virtual string GetName() override { return "SCE24_Bar_Midi_FeedbackProcessor"; }
+
     virtual void ClearCache() override
     {
         lastDoubleValue_ = 0.0;
@@ -1813,6 +1918,8 @@ public:
     virtual ~SCE24_Ring_Midi_FeedbackProcessor() {}
     SCE24_Ring_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int cellNumber) : SCE24_Midi_FeedbackProcessor(surface, widget, cellNumber) { }
        
+    virtual string GetName() override { return "SCE24_Ring_Midi_FeedbackProcessor"; }
+
     virtual void ClearCache() override
     {
         lastDoubleValue_ = 0.0;
@@ -1868,6 +1975,8 @@ public:
     virtual ~SCE24_OLEDButton_Midi_FeedbackProcessor() {}
     SCE24_OLEDButton_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int cellNumber, int itemNumber) : SCE24_Midi_FeedbackProcessor(surface, widget, cellNumber, itemNumber) {}
     
+    virtual string GetName() override { return "SCE24_OLEDButton_Midi_FeedbackProcessor"; }
+
     virtual int GetMaxCharacters() override
     {
         return maxChars.GetMaxCharacters(displayType_);
@@ -1962,6 +2071,8 @@ public:
     virtual ~SCE24_LEDButton_Midi_FeedbackProcessor() {}
     SCE24_LEDButton_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int cellNumber) : SCE24_Midi_FeedbackProcessor(surface, widget, cellNumber) { }
     
+    virtual string GetName() override { return "SCE24_LEDButton_Midi_FeedbackProcessor"; }
+
     virtual void ClearCache() override
     {
         lastDoubleValue_ = 0.0;
@@ -2017,6 +2128,8 @@ public:
     virtual ~SCE24_Background_Midi_FeedbackProcessor() {}
     SCE24_Background_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int cellNumber) : SCE24_Midi_FeedbackProcessor(surface, widget, cellNumber) { }
     
+    virtual string GetName() override { return "SCE24_Background_Midi_FeedbackProcessor"; }
+
     virtual void ClearCache() override
     {
         lastDoubleValue_ = 0.0;
@@ -2073,6 +2186,8 @@ private:
 public:
     FB_MCU_AssignmentDisplay_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget) : Midi_FeedbackProcessor(surface, widget) {}
     
+    virtual string GetName() override { return "FB_MCU_AssignmentDisplay_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         if(value == 0.0) // Track
@@ -2118,6 +2233,8 @@ private:
 public:
     MCU_TimeDisplay_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget) : Midi_FeedbackProcessor(surface, widget) {}
     
+    virtual string GetName() override { return "MCU_TimeDisplay_Midi_FeedbackProcessor"; }
+
     virtual void SetValue(double value) override
     {
         
@@ -2127,7 +2244,7 @@ public:
         DWORD now = timeGetTime();
 #endif
         
-        double pp=(GetPlayState()&1) ? GetPlayPosition() : GetCursorPosition();
+        double pp=(DAW::GetPlayState()&1) ? DAW::GetPlayPosition() : DAW::GetCursorPosition();
         unsigned char bla[10];
         
         memset(bla,0,sizeof(bla));
@@ -2159,7 +2276,7 @@ public:
         else if (tmode==4) // samples
         {
             char buf[128];
-            format_timestr_pos(pp,buf,sizeof(buf),4);
+            DAW::format_timestr_pos(pp,buf,sizeof(buf),4);
             if (strlen(buf)>sizeof(bla)) memcpy(bla,buf+strlen(buf)-sizeof(bla),sizeof(bla));
             else
                 memcpy(bla+sizeof(bla)-strlen(buf),buf,strlen(buf));
@@ -2167,7 +2284,7 @@ public:
         else if (tmode==5) // frames
         {
             char buf[128];
-            format_timestr_pos(pp,buf,sizeof(buf),5);
+            DAW::format_timestr_pos(pp,buf,sizeof(buf),5);
             char *p=buf;
             char *op=buf;
             int ccnt=0;
@@ -2194,7 +2311,7 @@ public:
         else if (tmode>0)
         {
             int num_measures=0;
-            double beats=TimeMap2_timeToBeats(NULL,pp,&num_measures,NULL,NULL,NULL)+ 0.000000000001;
+            double beats=DAW::TimeMap2_timeToBeats(NULL,pp,&num_measures,NULL,NULL,NULL)+ 0.000000000001;
             double nbeats = floor(beats);
             
             beats -= nbeats;

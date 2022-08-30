@@ -366,6 +366,9 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
                         if(zoneName == "Home")
                             zoneManager->SetHomeZone(zone);
                         
+                        if(zoneName == "Track" && i == 0)
+                            zoneManager->SetFirstTrackZone(zone);
+                        
                         if(zoneName == "FocusedFXParam")
                             zoneManager->SetFocusedFXParamZone(zone);
                         
@@ -610,11 +613,6 @@ void SetSteppedValues(vector<string> params, double &deltaValue, vector<double> 
 //////////////////////////////////////////////////////////////////////////////
 // Widgets
 //////////////////////////////////////////////////////////////////////////////
-static int strToHex(string valueStr)
-{
-    return strtol(valueStr.c_str(), nullptr, 16);
-}
-
 static void ProcessMidiWidget(int &lineNumber, ifstream &surfaceTemplateFile, vector<string> tokens, Midi_ControlSurface* surface)
 {
     if(tokens.size() < 2)
@@ -934,6 +932,9 @@ static void ProcessWidgetFile(string filePath, ControlSurface* surface)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Manager::InitActionsDictionary()
 {
+    actions_["Speak"] =                             new SpeakOSARAMessage();
+    actions_["SendMIDIMessage"] =                   new SendMIDIMessage();
+    actions_["SendOSCMessage"] =                    new SendOSCMessage();
     actions_["SaveProject"] =                       new SaveProject();
     actions_["Undo"] =                              new Undo();
     actions_["Redo"] =                              new Redo();
@@ -942,7 +943,11 @@ void Manager::InitActionsDictionary()
     actions_["TrackAutoMode"] =                     new TrackAutoMode();
     actions_["GlobalAutoMode"] =                    new GlobalAutoMode();
     actions_["TrackAutoModeDisplay"] =              new TrackAutoModeDisplay();
+    actions_["GlobalAutoModeDisplay"] =             new GlobalAutoModeDisplay();
+    actions_["CycleTrackInputMonitor"] =            new CycleTrackInputMonitor();
+    actions_["TrackInputMonitorDisplay"] =          new TrackInputMonitorDisplay();
     actions_["MCUTimeDisplay"] =                    new MCUTimeDisplay();
+    actions_["OSCTimeDisplay"] =                    new OSCTimeDisplay();
     actions_["NoAction"] =                          new NoAction();
     actions_["Reaper"] =                            new ReaperAction();
     actions_["FixedTextDisplay"] =                  new FixedTextDisplay(); ;
@@ -966,6 +971,8 @@ void Manager::InitActionsDictionary()
     actions_["GoHome"] =                            new GoHome();
     actions_["GoSubZone"] =                         new GoSubZone();
     actions_["LeaveSubZone"] =                      new LeaveSubZone();
+    actions_["SetAllDisplaysColor"] =               new SetAllDisplaysColor();
+    actions_["RestoreAllDisplaysColor"] =           new RestoreAllDisplaysColor();
     actions_["GoFXSlot"] =                          new GoFXSlot();
     actions_["ToggleEnableFocusedFXMapping"] =      new ToggleEnableFocusedFXMapping();
     actions_["ToggleEnableFocusedFXParamMapping"] = new ToggleEnableFocusedFXParamMapping();
@@ -1013,6 +1020,8 @@ void Manager::InitActionsDictionary()
     actions_["TrackPanLPercent"] =                  new TrackPanLPercent();
     actions_["TrackPanR"] =                         new TrackPanR();
     actions_["TrackPanRPercent"] =                  new TrackPanRPercent();
+    actions_["TrackPanAutoLeft"] =                  new TrackPanAutoLeft();
+    actions_["TrackPanAutoRight"] =                 new TrackPanAutoRight();
     actions_["TrackNameDisplay"] =                  new TrackNameDisplay();
     actions_["TrackNumberDisplay"] =                new TrackNumberDisplay();
     actions_["TrackVolumeDisplay"] =                new TrackVolumeDisplay();
@@ -1020,6 +1029,8 @@ void Manager::InitActionsDictionary()
     actions_["TrackPanWidthDisplay"] =              new TrackPanWidthDisplay();
     actions_["TrackPanLeftDisplay"] =               new TrackPanLeftDisplay();
     actions_["TrackPanRightDisplay"] =              new TrackPanRightDisplay();
+    actions_["TrackPanAutoLeftDisplay"] =           new TrackPanAutoLeftDisplay();
+    actions_["TrackPanAutoRightDisplay"] =          new TrackPanAutoRightDisplay();
     actions_["TrackOutputMeter"] =                  new TrackOutputMeter();
     actions_["TrackOutputMeterAverageLR"] =         new TrackOutputMeterAverageLR();
     actions_["TrackOutputMeterMaxPeakLR"] =         new TrackOutputMeterMaxPeakLR();
@@ -1027,13 +1038,15 @@ void Manager::InitActionsDictionary()
     actions_["FXParam"] =                           new FXParam();
     actions_["FXParamRelative"] =                   new FXParamRelative();
     actions_["ToggleFXBypass"] =                    new ToggleFXBypass();
+    actions_["FXBypassDisplay"] =                   new ToggleFXBypass();
+    actions_["ToggleFXOffline"] =                   new ToggleFXOffline();
+    actions_["FXOfflineDisplay"] =                  new ToggleFXOffline();
     actions_["FXNameDisplay"] =                     new FXNameDisplay();
     actions_["FXMenuNameDisplay"] =                 new FXMenuNameDisplay();
     actions_["FXParamNameDisplay"] =                new FXParamNameDisplay();
     actions_["FXParamValueDisplay"] =               new FXParamValueDisplay();
     actions_["FocusedFXParamNameDisplay"] =         new FocusedFXParamNameDisplay();
     actions_["FocusedFXParamValueDisplay"] =        new FocusedFXParamValueDisplay();
-    actions_["FXBypassedDisplay"] =                 new FXBypassedDisplay();
     actions_["FXGainReductionMeter"] =              new FXGainReductionMeter();
     actions_["TrackSendVolume"] =                   new TrackSendVolume();
     actions_["TrackSendVolumeDB"] =                 new TrackSendVolumeDB();
@@ -1131,6 +1144,7 @@ void Manager::Init()
                     oscSurfaces[tokens[1]] = new OSC_ControlSurfaceIO(tokens[1], GetInputSocketForPort(tokens[1], atoi(tokens[2].c_str())), GetOutputSocketForAddressAndPort(tokens[1], tokens[4], atoi(tokens[3].c_str())));
                 else if(tokens[0] == PageToken)
                 {
+                    bool followMCP = true;
                     bool synchPages = true;
                     bool isScrollLinkEnabled = false;
                     
@@ -1140,21 +1154,18 @@ void Manager::Init()
                     {
                         if(tokens.size() > 2)
                         {
-                            if(tokens[2] == "NoSynchPages")
-                                synchPages = false;
-                            else if(tokens[2] == "UseScrollLink")
-                                isScrollLinkEnabled = true;
+                            for(int i = 2; i < tokens.size(); i++)
+                            {
+                                if(tokens[i] == "FollowTCP")
+                                    followMCP = false;
+                                else if(tokens[i] == "NoSynchPages")
+                                    synchPages = false;
+                                else if(tokens[i] == "UseScrollLink")
+                                    isScrollLinkEnabled = true;
+                            }
                         }
                             
-                        if(tokens.size() > 3)
-                        {
-                            if(tokens[3] == "NoSynchPages")
-                                synchPages = false;
-                            else if(tokens[3] == "UseScrollLink")
-                                isScrollLinkEnabled = true;
-                        }
-                            
-                        currentPage = new Page(tokens[1], synchPages, isScrollLinkEnabled);
+                        currentPage = new Page(tokens[1], followMCP, synchPages, isScrollLinkEnabled);
                         pages_.push_back(currentPage);
                     }
                 }
@@ -1194,18 +1205,7 @@ void Manager::Init()
         }
         
         if(pages_.size() > 0)
-            pages_[currentPageIndex_]->ForceClear();       
-        
-        // Restore the BankIndex
-        result = DAW::GetProjExtState(0, "CSI", "BankIndex", buf, sizeof(buf));
-        
-        if(result > 0 && pages_.size() > currentPageIndex_)
-        {
-            if(MediaTrack* leftmosttrack = DAW::GetTrack(atoi(buf) + 1))
-                DAW::SetMixerScroll(leftmosttrack);
-            
-            pages_[currentPageIndex_]->AdjustTrackBank(atoi(buf));
-        }
+            pages_[currentPageIndex_]->ForceClear();               
     }
     catch (exception &e)
     {
@@ -1426,6 +1426,16 @@ void ActionContext::ClearWidget()
     widget_->Clear();
 }
 
+void ActionContext::UpdateRGBValue(double value)
+{
+    if(supportsRGB_)
+    {
+        currentRGBIndex_ = value == 0 ? 0 : 1;
+        if(RGBValues_.size() > currentRGBIndex_)
+            widget_->UpdateRGBValue(RGBValues_[currentRGBIndex_].r, RGBValues_[currentRGBIndex_].g, RGBValues_[currentRGBIndex_].b);
+    }
+}
+
 void ActionContext::UpdateWidgetValue(double value)
 {
     if(steppedValues_.size() > 0)
@@ -1435,12 +1445,9 @@ void ActionContext::UpdateWidgetValue(double value)
    
     widget_->UpdateValue(value);
 
-    if(supportsRGB_)
-    {
-        currentRGBIndex_ = value == 0 ? 0 : 1;
-        widget_->UpdateRGBValue(RGBValues_[currentRGBIndex_].r, RGBValues_[currentRGBIndex_].g, RGBValues_[currentRGBIndex_].b);
-    }
-    else if(supportsTrackColor_)
+    UpdateRGBValue(value);
+    
+    if(supportsTrackColor_)
         UpdateTrackColor();
 }
 
@@ -1715,8 +1722,25 @@ void Zone::AddNavigatorsForZone(string zoneName, vector<Navigator*> &navigators)
             navigators.push_back(zoneManager_->GetSelectedTrackNavigator());
 }
 
+void Zone::SetAllDisplaysColor(string color)
+{
+    for(auto [widget, isUsed] : widgets_)
+        widget->SetAllDisplaysColor(color);
+}
+
+void Zone::RestoreAllDisplaysColor()
+{
+    for(auto [widget, isUsed] : widgets_)
+        widget->RestoreAllDisplaysColor();
+}
+
 void Zone::Activate()
-{   
+{
+    for(auto [widget, isUsed] : widgets_)
+        if(widget->GetName() == "OnZoneActivation")
+            for(auto context : GetActionContexts(widget))
+                context->DoAction(1.0);
+
     isActive_ = true;
     
     zoneManager_->GetSurface()->ActivatingZone(GetName());
@@ -1748,6 +1772,11 @@ void Zone::OnTrackDeselection()
 
 void Zone::Deactivate()
 {
+    for(auto [widget, isUsed] : widgets_)
+        if(widget->GetName() == "OnZoneDeactivation")
+            for(auto context : GetActionContexts(widget))
+                context->DoAction(1.0);
+
     isActive_ = false;
     
     for(auto zone : includedZones_)
@@ -1998,6 +2027,18 @@ void  Widget::UpdateRGBValue(int r, int g, int b)
 {
     for(auto processor : feedbackProcessors_)
         processor->SetRGBValue(r, g, b);
+}
+
+void Widget::SetAllDisplaysColor(string color)
+{
+    for(auto processor : feedbackProcessors_)
+        processor->SetAllDisplaysColor(color);
+}
+
+void Widget::RestoreAllDisplaysColor()
+{
+    for(auto processor : feedbackProcessors_)
+        processor->RestoreAllDisplaysColor();
 }
 
 void  Widget::Clear()
@@ -2316,6 +2357,14 @@ void ZoneManager::OnTrackDeselection()
     }
 }
 
+void ZoneManager::ToggleEnableFocusedFXMapping()
+{
+    if(broadcast_.count("ToggleEnableFocusedFXMapping") > 0)
+        GetSurface()->GetPage()->SignalToggleEnableFocusedFXMapping(GetSurface());
+    
+    ToggleEnableFocusedFXMappingImpl();
+}
+
 void ZoneManager::AdjustTrackSendBank(int amount)
 {
     if(broadcast_.count("TrackSend") > 0)
@@ -2340,6 +2389,30 @@ void ZoneManager::AdjustTrackFXMenuBank(int amount)
     AdjustTrackFXMenuOffset(amount);
 }
 
+void ZoneManager::AdjustSelectedTrackSendBank(int amount)
+{
+    if(broadcast_.count("SelectedTrackSend") > 0)
+        GetSurface()->GetPage()->SignalSelectedTrackSendBank(GetSurface(), amount);
+    
+    AdjustSelectedTrackSendOffset(amount);
+}
+
+void ZoneManager::AdjustSelectedTrackReceiveBank(int amount)
+{
+    if(broadcast_.count("SelectedTrackReceive") > 0)
+        GetSurface()->GetPage()->SignalSelectedTrackReceiveBank(GetSurface(), amount);
+    
+    AdjustTrackReceiveOffset(amount);
+}
+
+void ZoneManager::AdjustSelectedTrackFXMenuBank(int amount)
+{
+    if(broadcast_.count("SelectedTrackFXMenu") > 0)
+        GetSurface()->GetPage()->SignalSelectedTrackFXMenuBank(GetSurface(), amount);
+    
+    AdjustSelectedTrackFXMenuOffset(amount);
+}
+
 Navigator* ZoneManager::GetMasterTrackNavigator() { return surface_->GetPage()->GetMasterTrackNavigator(); }
 Navigator* ZoneManager::GetSelectedTrackNavigator() { return surface_->GetPage()->GetSelectedTrackNavigator(); }
 Navigator* ZoneManager::GetFocusedFXNavigator() { return surface_->GetPage()->GetFocusedFXNavigator(); }
@@ -2347,8 +2420,94 @@ Navigator* ZoneManager::GetDefaultNavigator() { return surface_->GetPage()->GetD
 int ZoneManager::GetNumChannels() { return surface_->GetNumChannels(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TrackNavigationManager
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+void TrackNavigationManager::RebuildTracks()
+{
+    int oldTracksSize = tracks_.size();
+    
+    tracks_.clear();
+    
+    for (int i = 1; i <= GetNumTracks(); i++)
+    {
+        if(MediaTrack* track = DAW::CSurf_TrackFromID(i, followMCP_))
+            if(DAW::IsTrackVisible(track, followMCP_))
+                tracks_.push_back(track);
+    }
+    
+    if(tracks_.size() < oldTracksSize)
+    {
+        for(int i = oldTracksSize; i > tracks_.size(); i--)
+            page_->ForceClearTrack(i - trackOffset_);
+    }
+    
+    if(tracks_.size() != oldTracksSize)
+        page_->ForceUpdateTrackColors();
+}
+
+void TrackNavigationManager::NextTrackVCAFolderMode(string params)
+{
+    string VCAColor = "White";
+    string FolderColor = "White";
+    
+    vector<string> tokens = GetTokens(params);
+    
+    if(tokens.size()  == 2)
+    {
+        VCAColor = tokens[0];
+        FolderColor = tokens[1];
+    }
+    
+    currentTrackVCAFolderMode_ += 1;
+    
+    if(currentTrackVCAFolderMode_ > 2)
+    {
+        page_->RestoreAllDisplaysColor();
+        currentTrackVCAFolderMode_ = 0;
+        isVCAModeEnabled_ = false;
+        isFolderModeEnabled_ = false;
+    }
+    else if(currentTrackVCAFolderMode_ == 1)
+    {
+        page_->SetAllDisplaysColor(VCAColor);
+        isVCAModeEnabled_ = true;
+        isFolderModeEnabled_ = false;
+    }
+    else if(currentTrackVCAFolderMode_ == 2)
+    {
+        page_->SetAllDisplaysColor(FolderColor);
+        isFolderModeEnabled_ = true;
+        isVCAModeEnabled_ = false;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ControlSurface
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+void ControlSurface::Stop()
+{
+    if(isRewinding_ || isFastForwarding_) // set the cursor to the Play position
+        DAW::CSurf_OnPlay();
+ 
+    page_->SignalStop();
+    CancelRewindAndFastForward();
+    DAW::CSurf_OnStop();
+}
+
+void ControlSurface::Play()
+{
+    page_->SignalPlay();
+    CancelRewindAndFastForward();
+    DAW::CSurf_OnPlay();
+}
+
+void ControlSurface::Record()
+{
+    page_->SignalRecord();
+    CancelRewindAndFastForward();
+    DAW::CSurf_OnRecord();
+}
+
 void ControlSurface::OnTrackSelection(MediaTrack* track)
 {
     if(widgetsByName_.count("OnTrackSelection") > 0)
@@ -2360,6 +2519,19 @@ void ControlSurface::OnTrackSelection(MediaTrack* track)
         
         zoneManager_->OnTrackSelection();
     }
+}
+
+void ControlSurface::ForceClearTrack(int trackNum)
+{
+    for(auto widget : widgets_)
+        if(widget->GetChannelNumber() + channelOffset_ == trackNum)
+            widget->ForceClear();
+}
+
+void ControlSurface::ForceUpdateTrackColors()
+{
+    for( auto processor : trackColorFeedbackProcessors_)
+        processor->ForceUpdateTrackColors();
 }
 
 void ControlSurface::RequestUpdate()
@@ -2513,11 +2685,16 @@ void Midi_ControlSurface::SendMidiMessage(int first, int second, int third)
             
             while (packetReader_.isOk() && (message = packetReader_.popMessage()) != 0)
             {
-                float value = 0;
-                
-                if(message->arg().isFloat())
+                if (message->arg().isFloat())
                 {
+                    float value = 0;
                     message->arg().popFloat(value);
+                    surface->ProcessOSCMessage(message->addressPattern(), value);
+                }
+                else if (message->arg().isInt32())
+                {
+                    int value;
+                    message->arg().popInt32(value);
                     surface->ProcessOSCMessage(message->addressPattern(), value);
                 }
             }
@@ -2592,7 +2769,6 @@ void OSC_ControlSurface::SendOSCMessage(OSC_FeedbackProcessor* feedbackProcessor
         if(TheManager->GetSurfaceOutDisplay())
             DAW::ShowConsoleMsg(("OUT->" + name_ + " " + feedbackProcessor->GetWidget()->GetName() + " " + oscAddress + " " + value + "\n").c_str());
     }
-    
 }
 
 void Midi_ControlSurface::InitializeMCU()

@@ -10,6 +10,122 @@
 #include "control_surface_integrator.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class SendMIDIMessage : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "SendMIDIMessage"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        vector<string> tokens = GetTokens(context->GetStringParam());
+        
+        if(tokens.size() == 3)
+        {
+            context->GetSurface()->SendMidiMessage(strToHex(tokens[0]), strToHex(tokens[1]), strToHex(tokens[2]));
+        }
+        else
+        {
+            struct
+            {
+                MIDI_event_ex_t evt;
+                char data[128];
+            } midiSysExData;
+            
+            midiSysExData.evt.frame_offset = 0;
+            midiSysExData.evt.size = 0;
+            
+            for(int i = 0; i < tokens.size(); i++)
+                midiSysExData.evt.midi_message[midiSysExData.evt.size++] = strToHex(tokens[i]);
+            
+            context->GetSurface()->SendMidiMessage(&midiSysExData.evt);
+        }
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class SendOSCMessage : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "SendOSCMessage"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        // GAW TBD -- get a handle on requirements for this
+        
+        
+        
+        
+        
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class SpeakOSARAMessage : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "SpeakOSARAMessage"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        TheManager->Speak(context->GetStringParam());
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class SetAllDisplaysColor : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "SetAllDisplaysColor"; }
+    
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        context->GetZone()->SetAllDisplaysColor(context->GetStringParam());
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class RestoreAllDisplaysColor : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "RestoreAllDisplaysColor"; }
+    
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        context->GetZone()->RestoreAllDisplaysColor();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class SaveProject : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -154,11 +270,16 @@ class CycleTrackVCAFolderModes : public Action
 public:
     virtual string GetName() override { return "CycleTrackVCAFolderModes"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
-        context->GetPage()->NextTrackVCAFolderMode();
+        context->GetPage()->NextTrackVCAFolderMode(context->GetStringParam());
     }
 };
 
@@ -171,7 +292,20 @@ public:
     
     void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderMode());
+        int trackVCAFolderMode = context->GetPage()->GetCurrentTrackVCAFolderMode();
+        
+        context->UpdateWidgetValue(trackVCAFolderMode);
+        
+        string folderModeStr = "";
+        
+        if(trackVCAFolderMode == 0)
+            folderModeStr = "Track";
+        else if(trackVCAFolderMode == 1)
+            folderModeStr = "VCA";
+        else if(trackVCAFolderMode == 2)
+            folderModeStr = "Folder";
+
+        context->UpdateWidgetValue(folderModeStr);
     }
 };
 
@@ -181,6 +315,11 @@ class CycleTimeDisplayModes : public Action
 {
 public:
     virtual string GetName() override { return "CycleTimeDisplayModes"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
 
     void Do(ActionContext* context, double value) override
     {
@@ -197,6 +336,11 @@ class GoNextPage : public Action
 public:
     virtual string GetName() override { return "GoNextPage"; }
 
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -212,6 +356,11 @@ class GoPage : public Action
 public:
     virtual string GetName() override { return "GoPage"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -243,9 +392,9 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         if(context->GetSurface()->GetZoneManager()->GetIsHomeZoneOnlyActive())
-           context->UpdateWidgetValue(1.0);
+            context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -305,6 +454,11 @@ class GoFXSlot  : public Action
 {
 public:
     virtual string GetName() override { return "GoFXSlot"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
 
     void Do(ActionContext* context, double value) override
     {
@@ -367,7 +521,7 @@ public:
         if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("SelectedTrackFX"))
             context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -389,9 +543,9 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("TrackSend"))
-           context->UpdateWidgetValue(1.0);
+            context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -413,9 +567,9 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("TrackReceive"))
-           context->UpdateWidgetValue(1.0);
+            context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -437,9 +591,9 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("TrackFXMenu"))
-           context->UpdateWidgetValue(1.0);
+            context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -461,9 +615,9 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("SelectedTrack"))
-           context->UpdateWidgetValue(1.0);
+            context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -485,9 +639,9 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("SelectedTrackSend"))
-           context->UpdateWidgetValue(1.0);
+            context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -509,9 +663,9 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("SelectedTrackReceive"))
-           context->UpdateWidgetValue(1.0);
+            context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -533,9 +687,9 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("SelectedTrackFXMenu"))
-           context->UpdateWidgetValue(1.0);
+            context->UpdateWidgetValue(1.0);
         else
-            context->ClearWidget();
+            context->UpdateWidgetValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -553,6 +707,11 @@ class TrackBank : public Action
 {
 public:
     virtual string GetName() override { return "TrackBank"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
     
     void Do(ActionContext* context, double value) override
     {
@@ -569,6 +728,11 @@ class SelectedTrackBank : public Action
 public:
     virtual string GetName() override { return "SelectedTrackBank"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -603,6 +767,11 @@ class SelectedTrackSendBank : public Action
 public:
     virtual string GetName() override { return "SelectedTrackSendBank"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -618,6 +787,11 @@ class SelectedTrackReceiveBank : public Action
 public:
     virtual string GetName() override { return "SelectedTrackReceiveBank"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -633,6 +807,11 @@ class SelectedTrackFXMenuBank : public Action
 public:
     virtual string GetName() override { return "SelectedTrackFXMenuBank"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -648,6 +827,11 @@ class TrackSendBank : public Action
 public:
     virtual string GetName() override { return "TrackSendBank"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -663,6 +847,11 @@ class TrackReceiveBank : public Action
 public:
     virtual string GetName() override { return "TrackReceiveBank"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -678,6 +867,11 @@ class TrackFXMenuBank : public Action
 public:
     virtual string GetName() override { return "TrackFXMenuBank"; }
     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -807,7 +1001,12 @@ class SetToggleChannel : public Action
 {
 public:
     virtual string GetName() override { return "SetToggleChannel"; }
-       
+     
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -823,6 +1022,11 @@ class Broadcast  : public Action
 public:
     virtual string GetName() override { return "Broadcast"; }
 
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     void Do(ActionContext* context, double value) override
     {
         context->GetSurface()->GetZoneManager()->SetBroadcast(context);
@@ -836,6 +1040,11 @@ class Receive  : public Action
 {
 public:
     virtual string GetName() override { return "Receive"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
 
     void Do(ActionContext* context, double value) override
     {

@@ -136,12 +136,24 @@ public:
     {
         if(MediaTrack* track = context->GetTrack())
         {
-            if(DAW::TrackFX_GetCount(track) > context->GetSlotIndex())
+            //I_FXEN : fx enabled, 0=bypassed, !0=fx active
+            if(DAW::GetMediaTrackInfo_Value(track, "I_FXEN") == 0)
+            {
+                context->UpdateWidgetValue(0.0);
+                context->UpdateWidgetValue("Bypassed");
+            }
+            else if(DAW::TrackFX_GetCount(track) > context->GetSlotIndex())
             {
                 if(DAW::TrackFX_GetEnabled(track, context->GetSlotIndex()))
+                {
                     context->UpdateWidgetValue(0.0);
+                    context->UpdateWidgetValue("Bypassed");
+                }
                 else
+                {
                     context->UpdateWidgetValue(1.0);
+                    context->UpdateWidgetValue("Enabled");
+                }
             }
             else
                 context->ClearWidget();
@@ -156,6 +168,46 @@ public:
 
         if(MediaTrack* track = context->GetTrack())
             DAW::TrackFX_SetEnabled(track, context->GetSlotIndex(), ! DAW::TrackFX_GetEnabled(track, context->GetSlotIndex()));
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ToggleFXOffline : public FXAction
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "ToggleFXOffline"; }
+   
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(DAW::TrackFX_GetCount(track) > context->GetSlotIndex())
+            {
+                if(DAW::TrackFX_GetOffline(track, context->GetSlotIndex()))
+                {
+                    context->UpdateWidgetValue(0.0);
+                    context->UpdateWidgetValue("Offline");
+                }
+                else
+                {
+                    context->UpdateWidgetValue(1.0);
+                    context->UpdateWidgetValue("Online");
+                }
+            }
+            else
+                context->ClearWidget();
+        }
+        else
+            context->ClearWidget();
+    }
+    
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+
+        if(MediaTrack* track = context->GetTrack())
+            DAW::TrackFX_SetOffline(track, context->GetSlotIndex(), ! DAW::TrackFX_GetOffline(track, context->GetSlotIndex()));
     }
 };
 
@@ -292,7 +344,6 @@ public:
             DAW::CSurf_SetSurfaceVolume(track, DAW::CSurf_OnVolumeChange(track, DB2VAL(GetCurrentDBValue(context)), false), NULL);
     }
 };
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class TrackPan : public Action
@@ -643,6 +694,135 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackPanAutoLeft : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "TrackPanAutoLeft"; }
+    
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+                return panToNormalized(DAW::GetMediaTrackInfo_Value(track, "D_DUALPANL"));
+            else
+            {
+                double vol, pan = 0.0;
+                DAW::GetTrackUIVolPan(track, &vol, &pan);
+                return panToNormalized(pan);
+            }
+        }
+        else
+            return 0.0;
+    }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+                context->UpdateWidgetValue(panToNormalized(DAW::GetMediaTrackInfo_Value(track, "D_DUALPANL")));
+            else
+                context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
+        }
+        else
+            context->ClearWidget();
+    }
+    
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+            {
+                double pan = normalizedToPan(value);
+                DAW::GetSetMediaTrackInfo(track, "D_DUALPANL", &pan);
+            }
+            else
+                DAW::CSurf_SetSurfacePan(track, DAW::CSurf_OnPanChange(track, normalizedToPan(value), false), NULL);
+        }
+    }
+    
+    virtual void Touch(ActionContext* context, double value) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+                context->GetZone()->GetNavigator()->SetIsPanLeftTouched(value);
+            else
+            {
+                context->GetZone()->GetNavigator()->SetIsPanTouched(value);
+                DAW::CSurf_SetSurfacePan(track, DAW::CSurf_OnPanChange(track, normalizedToPan(GetCurrentNormalizedValue(context)), false), NULL);
+            }
+        }
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackPanAutoRight : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "TrackPanAutoRight"; }
+    
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+                return panToNormalized(DAW::GetMediaTrackInfo_Value(track, "D_DUALPANR"));
+            else
+                return panToNormalized(DAW::GetMediaTrackInfo_Value(track, "D_WIDTH"));
+        }
+        else
+            return 0.0;
+    }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+                context->UpdateWidgetValue(panToNormalized(DAW::GetMediaTrackInfo_Value(track, "D_DUALPANR")));
+            else
+                context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
+        }
+        else
+            context->ClearWidget();
+    }
+    
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+            {
+                double pan = normalizedToPan(value);
+                DAW::GetSetMediaTrackInfo(track, "D_DUALPANR", &pan);
+            }
+            else
+                DAW::CSurf_OnWidthChange(track, normalizedToPan(value), false);
+        }
+    }
+    
+    virtual void Touch(ActionContext* context, double value) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+                context->GetZone()->GetNavigator()->SetIsPanRightTouched(value);
+            else
+            {
+                context->GetZone()->GetNavigator()->SetIsPanWidthTouched(value);
+                DAW::CSurf_OnWidthChange(track, normalizedToPan(GetCurrentNormalizedValue(context)), false);
+
+            }
+        }
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class TrackSendVolume : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -959,6 +1139,11 @@ class TrackSendPrePost : public Action
 public:
     virtual string GetName() override { return "TrackSendPrePost"; }
        
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     virtual void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -1277,6 +1462,11 @@ class TrackReceivePrePost : public Action
 public:
     virtual string GetName() override { return "TrackReceivePrePost"; }
         
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     virtual void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -1435,32 +1625,6 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class FXBypassedDisplay : public Action
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-public:
-    virtual string GetName() override { return "FXBypassedDisplay"; }
-    
-    virtual void RequestUpdate(ActionContext* context) override
-    {
-        if(MediaTrack* track = context->GetTrack())
-        {
-            if(DAW::TrackFX_GetCount(track) > context->GetSlotIndex())
-            {
-                if(DAW::TrackFX_GetEnabled(track, context->GetSlotIndex()))
-                    context->UpdateWidgetValue("Enabled");
-                else
-                    context->UpdateWidgetValue("Bypassd");
-            }
-            else
-                context->UpdateWidgetValue("");
-        }
-        else
-            context->ClearWidget();
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class TrackSendNameDisplay : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -1528,7 +1692,7 @@ public:
             {
                 double panVal = DAW::GetTrackSendInfo_Value(track, 0, context->GetSlotIndex() + DAW::GetTrackNumSends(track, 1), "D_PAN");
                 
-                context->UpdateWidgetValue(context->GetPanValueString(panVal));
+                context->UpdateWidgetValue(context->GetPanValueString(panVal, ""));
             }
             else
                 context->ClearWidget();
@@ -1643,7 +1807,7 @@ public:
             {
                 double panVal = DAW::GetTrackSendInfo_Value(track, -1, context->GetSlotIndex(), "D_PAN");
                 
-                context->UpdateWidgetValue(context->GetPanValueString(panVal));
+                context->UpdateWidgetValue(context->GetPanValueString(panVal, ""));
             }
             else
                 context->ClearWidget();
@@ -1797,7 +1961,7 @@ public:
             double vol, pan = 0.0;
             DAW::GetTrackUIVolPan(track, &vol, &pan);
 
-            context->UpdateWidgetValue(context->GetPanValueString(pan));
+            context->UpdateWidgetValue(context->GetPanValueString(pan, ""));
         }
         else
             context->ClearWidget();
@@ -1837,7 +2001,7 @@ public:
         {
             double panVal = DAW::GetMediaTrackInfo_Value(track, "D_DUALPANL");
             
-            context->UpdateWidgetValue(context->GetPanValueString(panVal));
+            context->UpdateWidgetValue(context->GetPanValueString(panVal, "L"));
         }
         else
             context->ClearWidget();
@@ -1857,7 +2021,62 @@ public:
         {
             double panVal = DAW::GetMediaTrackInfo_Value(track, "D_DUALPANR");
             
-            context->UpdateWidgetValue(context->GetPanValueString(panVal));
+            context->UpdateWidgetValue(context->GetPanValueString(panVal, "R"));
+        }
+        else
+            context->ClearWidget();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackPanAutoLeftDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "TrackPanAutoLeftDisplay"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+            {
+                double panVal = DAW::GetMediaTrackInfo_Value(track, "D_DUALPANL");
+                context->UpdateWidgetValue(context->GetPanValueString(panVal, "L"));
+            }
+            else
+            {
+                double vol, pan = 0.0;
+                DAW::GetTrackUIVolPan(track, &vol, &pan);
+                context->UpdateWidgetValue(context->GetPanValueString(pan, ""));
+            }
+        }
+        else
+            context->ClearWidget();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackPanAutoRightDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "TrackPanAutoRightDisplay"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(GetPanMode(track) == 6)
+            {
+                double panVal = DAW::GetMediaTrackInfo_Value(track, "D_DUALPANR");
+                context->UpdateWidgetValue(context->GetPanValueString(panVal, "R"));
+            }
+            else
+            {
+                double widthVal = DAW::GetMediaTrackInfo_Value(track, "D_WIDTH");
+                context->UpdateWidgetValue(context->GetPanWidthValueString(widthVal));
+            }
         }
         else
             context->ClearWidget();
@@ -2016,6 +2235,11 @@ class TrackToggleVCASpill : public Action
 public:
     virtual string GetName() override { return "TrackToggleVCASpill"; }
 
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
     virtual void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
@@ -2159,7 +2383,8 @@ public:
             if(currentTrack == nullptr)
                 continue;
             
-            DAW::CSurf_SetSurfaceSelected(currentTrack, DAW::CSurf_OnSelectedChange(currentTrack, 1), NULL);
+            if(context->GetPage()->GetIsTrackVisible(currentTrack))
+                DAW::CSurf_SetSurfaceSelected(currentTrack, DAW::CSurf_OnSelectedChange(currentTrack, 1), NULL);
         }
         
         MediaTrack* lowestTrack = context->GetPage()->GetTrackFromId(lowerBound);
@@ -2444,6 +2669,56 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class GlobalAutoModeDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "GlobalAutoModeDisplay"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+            context->UpdateWidgetValue(context->GetPage()->GetGlobalAutoModeDisplayName());
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CycleTrackInputMonitor : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "CycleTrackInputMonitor"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateRGBValue(0.0);
+    }
+
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0)
+            return;
+
+        if(MediaTrack* track = context->GetTrack())
+            context->GetPage()->NextInputMonitorMode(track);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackInputMonitorDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "TrackInputMonitorDisplay"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+            context->UpdateWidgetValue(context->GetPage()->GetCurrentInputMonitorMode(track));
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class MCUTimeDisplay : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -2453,6 +2728,114 @@ public:
     virtual void RequestUpdate(ActionContext* context) override
     {
         context->UpdateWidgetValue(0);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class OSCTimeDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "OSCTimeDisplay"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        string timeStr = "";
+        
+        double pp=(DAW::GetPlayState()&1) ? DAW::GetPlayPosition() : DAW::GetCursorPosition();
+
+        int *tmodeptr = TheManager->GetTimeMode2Ptr();
+        
+        int tmode = 0;
+        
+        if(tmodeptr && (*tmodeptr)>=0) tmode = *tmodeptr;
+        else
+        {
+            tmodeptr = TheManager->GetTimeModePtr();
+            if (tmodeptr)
+                tmode=*tmodeptr;
+        }
+
+        if(tmode == 3) // seconds
+        {
+            double *toptr = TheManager->GetTimeOffsPtr();
+            
+            if (toptr)
+                pp+=*toptr;
+            
+            timeStr = to_string((int)pp) + " " + to_string(((int)(pp*100.0))%100);
+        }
+        else if(tmode==4) // samples
+        {
+            char buf[128];
+            DAW::format_timestr_pos(pp, buf, sizeof(buf), 4);
+            timeStr = string(buf);
+        }
+        else if(tmode == 5) // frames
+        {
+            char buf[128];
+            DAW::format_timestr_pos(pp, buf, sizeof(buf), 5);
+            timeStr = string(buf);
+        }
+        else if(tmode > 0)
+        {
+            int num_measures=0;
+            double beats=DAW::TimeMap2_timeToBeats(NULL, pp, &num_measures, NULL, NULL, NULL) + 0.000000000001;
+            double nbeats = floor(beats);
+            
+            beats -= nbeats;
+                        
+            int *measptr = TheManager->GetMeasOffsPtr();
+          
+            timeStr = to_string(num_measures+1+(measptr ? *measptr : 0)) + " " + to_string((int)(nbeats + 1)) + " ";
+            
+            int subBeats = (int)(1000.0 * beats);
+
+            if(subBeats < 10)
+                timeStr += "00";
+            else if(subBeats < 100)
+                timeStr += "0";
+            
+            timeStr += to_string(subBeats);
+        }
+        else
+        {
+            double *toptr = TheManager->GetTimeOffsPtr();
+            if (toptr) pp+=(*toptr);
+            
+            int ipp=(int)pp;
+            int fr=(int)((pp-ipp)*1000.0);
+            
+            int hours = (int)(ipp/3600);
+            if(hours < 10)
+                timeStr += "00";
+            else if(hours < 100)
+                timeStr += "0";
+            
+            timeStr += to_string(hours) + ":";
+            
+            int minutes = ((int)(ipp/60)) %3600;
+            if(minutes < 10)
+                timeStr += "0";
+            
+            timeStr += to_string(minutes) + ":";
+
+            int seconds = ((int)ipp) %60;
+            if(seconds < 10)
+                timeStr += "0";
+            
+            timeStr += to_string(seconds) + ":";
+
+            int frames =(int)fr;
+            if(frames < 10)
+                timeStr += "00";
+            else if(frames < 100)
+                timeStr += "0";
+            
+            timeStr += to_string((int)fr);
+        }
+
+        context->UpdateWidgetValue(timeStr);
     }
 };
 

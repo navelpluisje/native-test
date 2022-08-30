@@ -84,6 +84,11 @@ static vector<string> GetTokens(string line)
     return tokens;
 }
 
+static int strToHex(string valueStr)
+{
+    return strtol(valueStr.c_str(), nullptr, 16);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class CSurfIntegrator;
 class Page;
@@ -318,6 +323,7 @@ public:
     void UpdateWidgetValue(double value);
     void UpdateWidgetValue(string value);
     void UpdateWidgetMode(string modeParams);
+    void UpdateRGBValue(double value);
 
     void DoTouch(double value)
     {
@@ -341,14 +347,15 @@ public:
     void SetCurrentRGB(rgb_color newColor)
     {
         supportsRGB_ = true;
-        RGBValues_[currentRGBIndex_] = newColor;
+        if(RGBValues_.size() > currentRGBIndex_)
+            RGBValues_[currentRGBIndex_] = newColor;
     }
     
     rgb_color GetCurrentRGB()
     {
         rgb_color blankColor;
         
-        if(RGBValues_.size() > 0 && currentRGBIndex_ < RGBValues_.size())
+        if(RGBValues_.size() > currentRGBIndex_)
             return RGBValues_[currentRGBIndex_];
         else return blankColor;
     }
@@ -368,7 +375,7 @@ public:
         steppedValuesIndex_ = index;
     }
 
-    string GetPanValueString(double panVal)
+    string GetPanValueString(double panVal, string dualPan)
     {
         bool left = false;
         
@@ -391,10 +398,16 @@ public:
                 trackPanValueString += "<  ";
             
             trackPanValueString += to_string(panIntVal);
+            
+            if(dualPan != "")
+                trackPanValueString += dualPan;
         }
         else
         {
-            trackPanValueString += "   ";
+            if(dualPan == "")
+                trackPanValueString += "   ";
+            else
+                trackPanValueString += "  " + dualPan;
             
             trackPanValueString += to_string(panIntVal);
             
@@ -407,7 +420,15 @@ public:
         }
         
         if(panIntVal == 0)
-            trackPanValueString = "  <C>  ";
+        {
+            if(dualPan == "")
+                trackPanValueString = "  <C>  ";
+            if(dualPan == "L")
+                trackPanValueString = " L<C>  ";
+            if(dualPan == "R")
+                trackPanValueString = " <C>R  ";
+
+        }
 
         return trackPanValueString;
     }
@@ -425,13 +446,15 @@ public:
         int widthIntVal = int(widthVal * 100.0);
         string trackPanWidthString = "";
         
-        if(reversed)
+        if(! reversed)
+            trackPanWidthString += "Wid ";
+        else
             trackPanWidthString += "Rev ";
         
         trackPanWidthString += to_string(widthIntVal);
         
         if(widthIntVal == 0)
-            trackPanWidthString = " <Mno> ";
+            trackPanWidthString = "<Mono> ";
 
         return trackPanWidthString;
     }
@@ -476,7 +499,9 @@ public:
     Navigator* GetNavigator() { return navigator_; }
     void SetSlotIndex(int index) { slotIndex_ = index; }
     int GetSlotIndex();
-    
+    void SetAllDisplaysColor(string color);
+    void RestoreAllDisplaysColor();
+
     vector<shared_ptr<ActionContext>> &GetActionContexts(Widget* widget);
         
     void RequestUpdate(map<Widget*, bool> &usedWidgets);
@@ -584,6 +609,7 @@ private:
     string const name_;
     vector<FeedbackProcessor*> feedbackProcessors_;
     int channelNumber_ = 0;
+    string messageGeneratorClass_ = "";
     
 public:
     Widget(ControlSurface* surface, string name) : surface_(surface), name_(name)
@@ -604,14 +630,17 @@ public:
     string GetName() { return name_; }
     ControlSurface* GetSurface() { return surface_; }
     ZoneManager* GetZoneManager();
-    
     int GetChannelNumber() { return channelNumber_; }
-
+    void SetMessageGeneratorClass(string messageGeneratorClass) { messageGeneratorClass_ = messageGeneratorClass; }
+    string GetMessageGeneratorClass(string messageGeneratorClass) { return messageGeneratorClass_; }
+    
     void SetProperties(vector<vector<string>> properties);
     void UpdateMode(string modeParams);
     void UpdateValue(double value);
     void UpdateValue(string value);
     void UpdateRGBValue(int r, int g, int b);
+    void SetAllDisplaysColor(string color);
+    void RestoreAllDisplaysColor();
     void Clear();
     void ForceClear();
     void LogInput(double value);
@@ -646,7 +675,8 @@ private:
     map<Widget*, bool> usedWidgets_;
 
     shared_ptr<Zone> homeZone_ = nullptr;
-    
+    shared_ptr<Zone> firstTrackZone_ = nullptr;
+
     shared_ptr<Zone> focusedFXParamZone_ = nullptr;
     bool isFocusedFXParamMappingEnabled_ = false;
 
@@ -708,15 +738,20 @@ public:
     void ActivateTrackFXSlot(MediaTrack* track, Navigator* navigator, int fxSlot);
     void GoAssociatedZone(string zoneName);
     void HandleActivation(string zoneName);
+    void ToggleEnableFocusedFXMapping();
     void AdjustTrackSendBank(int amount);
     void AdjustTrackReceiveBank(int amount);
     void AdjustTrackFXMenuBank(int amount);
-    
+    void AdjustSelectedTrackSendBank(int amount);
+    void AdjustSelectedTrackReceiveBank(int amount);
+    void AdjustSelectedTrackFXMenuBank(int amount);
+
     map<string, CSIZoneInfo> &GetZoneFilePaths() { return zoneFilePaths_; }
     
     ControlSurface* GetSurface() { return surface_; }   
     
     void SetHomeZone(shared_ptr<Zone> zone) { homeZone_ = zone; }
+    void SetFirstTrackZone(shared_ptr<Zone> zone) { firstTrackZone_ = zone; }
     void SetFocusedFXParamZone(shared_ptr<Zone> zone) { focusedFXParamZone_ = zone; }
 
     int GetTrackSendOffset() { return trackSendOffset_; }
@@ -728,10 +763,22 @@ public:
     int GetSelectedTrackFXMenuOffset() { return selectedTrackFXMenuOffset_; }
     
     bool GetIsFocusedFXMappingEnabled() { return isFocusedFXMappingEnabled_; }
-    void ToggleEnableFocusedFXMapping() { isFocusedFXMappingEnabled_ = ! isFocusedFXMappingEnabled_; }
+    void ToggleEnableFocusedFXMappingImpl() { isFocusedFXMappingEnabled_ = ! isFocusedFXMappingEnabled_; }
     
     bool GetIsFocusedFXParamMappingEnabled() { return isFocusedFXParamMappingEnabled_; }
     
+    void SetAllDisplaysColor(string color)
+    {
+        if(firstTrackZone_)
+            firstTrackZone_->SetAllDisplaysColor(color);
+    }
+    
+    void RestoreAllDisplaysColor()
+    {
+        if(firstTrackZone_)
+            firstTrackZone_->RestoreAllDisplaysColor();
+    }
+
     void ToggleEnableFocusedFXParamMapping()
     {
         isFocusedFXParamMappingEnabled_ = ! isFocusedFXParamMappingEnabled_;
@@ -775,6 +822,12 @@ public:
             ActivateTrackFXSlot(track, navigator, fxSlot);
     }
     
+    void HandleToggleEnableFocusedFXMapping()
+    {
+        if(receive_.count("ToggleEnableFocusedFXMapping") > 0)
+            ToggleEnableFocusedFXMappingImpl();
+    }
+
     void HandleTrackSendBank(int amount)
     {
         if(receive_.count("TrackSend") > 0)
@@ -790,6 +843,24 @@ public:
     void HandleTrackFXMenuBank(int amount)
     {
         if(receive_.count("TrackFXMenu") > 0)
+            AdjustTrackFXMenuOffset(amount);
+    }
+    
+    void HandleSelectedTrackSendBank(int amount)
+    {
+        if(receive_.count("SelectedTrackSend") > 0)
+            AdjustTrackSendOffset(amount);
+    }
+
+    void HandleSelectedTrackReceiveBank(int amount)
+    {
+        if(receive_.count("SelectedTrackReceive") > 0)
+            AdjustTrackReceiveOffset(amount);
+    }
+
+    void HandleSelectedTrackFXMenuBank(int amount)
+    {
+        if(receive_.count("SelectedTrackFXMenu") > 0)
             AdjustTrackFXMenuOffset(amount);
     }
     
@@ -833,7 +904,7 @@ public:
             selectedTrackOffset_ = 0;
     }
     
-    void AdjustSelectedTrackSendBank(int amount)
+    void AdjustSelectedTrackSendOffset(int amount)
     {
         // GAW TBD -- calc max and clamp
         
@@ -843,7 +914,7 @@ public:
             selectedTrackSendOffset_ = 0;
     }
     
-    void AdjustSelectedTrackReceiveBank(int amount)
+    void AdjustSelectedTrackReceiveOffset(int amount)
     {
         // GAW TBD -- calc max and clamp
         
@@ -853,7 +924,7 @@ public:
             selectedTrackReceiveOffset_ = 0;
     }
     
-    void AdjustSelectedTrackFXMenuBank(int amount)
+    void AdjustSelectedTrackFXMenuOffset(int amount)
     {
         // GAW TBD -- calc max and clamp
         
@@ -1155,6 +1226,12 @@ protected:
         AddWidget(new Widget(this, "OnPageEnter"));
         AddWidget(new Widget(this, "OnPageLeave"));
         AddWidget(new Widget(this, "OnInitialization"));
+        AddWidget(new Widget(this, "OnPlayStart"));
+        AddWidget(new Widget(this, "OnPlayStop"));
+        AddWidget(new Widget(this, "OnRecordStart"));
+        AddWidget(new Widget(this, "OnRecordStop"));
+        AddWidget(new Widget(this, "OnZoneActivation"));
+        AddWidget(new Widget(this, "OnZoneDeactivation"));
     }
     
 public:
@@ -1173,7 +1250,13 @@ public:
         }
     };
     
+    void Stop();
+    void Play();
+    void Record();
+    
     void RequestUpdate();
+    void ForceClearTrack(int trackNum);
+    void ForceUpdateTrackColors();
     void OnTrackSelection(MediaTrack* track);
     virtual void SetHasMCUMeters(int displayType) {}
     virtual void ActivatingZone(string zoneName) {}
@@ -1181,6 +1264,9 @@ public:
     virtual void HandleExternalInput() {}
     virtual void UpdateTimeDisplay() {}
     virtual void ForceRefreshTimeDisplay() {}
+    
+    virtual void SendMidiMessage(MIDI_event_ex_t* midiMessage) {}
+    virtual void SendMidiMessage(int first, int second, int third) {}
     
     ZoneManager* GetZoneManager() { return zoneManager_; }
     Page* GetPage() { return page_; }
@@ -1191,6 +1277,16 @@ public:
     
     bool GetIsRewinding() { return isRewinding_; }
     bool GetIsFastForwarding() { return isFastForwarding_; }
+
+    void SetAllDisplaysColor(string color)
+    {
+        zoneManager_->SetAllDisplaysColor(color);
+    }
+    
+    void RestoreAllDisplaysColor()
+    {
+        zoneManager_->RestoreAllDisplaysColor();
+    }
 
     void ToggleChannel(int channelNum)
     {
@@ -1222,27 +1318,27 @@ public:
         OnTrackSelection(track);
     }
     
-    void Stop()
+    void HandleStop()
     {
-        if(isRewinding_ || isFastForwarding_) // set the cursor to the Play position
-            DAW::CSurf_OnPlay();
+        if(widgetsByName_.count("OnRecordStop") > 0)
+            zoneManager_->DoAction(widgetsByName_["OnRecordStop"], 1.0);
+
+        if(widgetsByName_.count("OnPlayStop") > 0)
+            zoneManager_->DoAction(widgetsByName_["OnPlayStop"], 1.0);
+    }
+    
+    void HandlePlay()
+    {
+        if(widgetsByName_.count("OnPlayStart") > 0)
+            zoneManager_->DoAction(widgetsByName_["OnPlayStart"], 1.0);
+    }
+    
+    void HandleRecord()
+    {
+        if(widgetsByName_.count("OnRecordStart") > 0)
+            zoneManager_->DoAction(widgetsByName_["OnRecordStart"], 1.0);
+    }
         
-        CancelRewindAndFastForward();
-        DAW::CSurf_OnStop();
-    }
-    
-    void Play()
-    {
-        CancelRewindAndFastForward();
-        DAW::CSurf_OnPlay();
-    }
-    
-    void Record()
-    {
-        CancelRewindAndFastForward();
-        DAW::CSurf_OnRecord();
-    }
-    
     void StartRewinding()
     {
         if(isFastForwarding_)
@@ -1348,6 +1444,7 @@ protected:
 public:
     FeedbackProcessor(Widget* widget) : widget_(widget) {}
     virtual ~FeedbackProcessor() {}
+    virtual string GetName()  { return "FeedbackProcessor"; }
     Widget* GetWidget() { return widget_; }
     virtual void SetRGBValue(int r, int g, int b) {}
     virtual void ForceValue(double value) {}
@@ -1357,7 +1454,10 @@ public:
     virtual void SetCurrentColor(double value) {}
     virtual void SetProperties(vector<vector<string>> properties) {}
     virtual void UpdateTrackColors() {}
-    
+    virtual void ForceUpdateTrackColors() {}
+    virtual void SetAllDisplaysColor(string color) {}
+    virtual void RestoreAllDisplaysColor() {}
+
     virtual int GetMaxCharacters() { return 0; }
     
     void SetMode(string modeParams)
@@ -1431,6 +1531,8 @@ protected:
     void ForceMidiMessage(int first, int second, int third);
 
 public:
+    virtual string GetName() override { return "Midi_FeedbackProcessor"; }
+
     virtual void ClearCache() override
     {
         lastMessageSent_->midi_message[0] = 0;
@@ -1505,8 +1607,8 @@ public:
     virtual ~Midi_ControlSurface() {}
     
     void ProcessMidiMessage(const MIDI_event_ex_t* evt);
-    void SendMidiMessage(MIDI_event_ex_t* midiMessage);
-    void SendMidiMessage(int first, int second, int third);
+    virtual void SendMidiMessage(MIDI_event_ex_t* midiMessage) override;
+    virtual void SendMidiMessage(int first, int second, int third) override;
 
     virtual void SetHasMCUMeters(int displayType) override
     {
@@ -1534,9 +1636,10 @@ protected:
     string oscAddress_ = "";
     
 public:
-    
     OSC_FeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : FeedbackProcessor(widget), surface_(surface), oscAddress_(oscAddress) {}
     ~OSC_FeedbackProcessor() {}
+
+    virtual string GetName() override { return "OSC_FeedbackProcessor"; }
 
     virtual void SetRGBValue(int r, int g, int b) override;
     virtual void ForceValue(double value) override;
@@ -1550,6 +1653,8 @@ class OSC_IntFeedbackProcessor : public OSC_FeedbackProcessor
 public:
     OSC_IntFeedbackProcessor(OSC_ControlSurface* surface, Widget* widget, string oscAddress) : OSC_FeedbackProcessor(surface, widget, oscAddress) {}
     ~OSC_IntFeedbackProcessor() {}
+
+    virtual string GetName() override { return "OSC_IntFeedbackProcessor"; }
 
     virtual void ForceValue(double value) override;
 };
@@ -1586,7 +1691,7 @@ public:
         if(outSocket_ != nullptr && outSocket_->isOk())
         {
             oscpkt::Message message;
-            message.init(oscAddress).pushInt64(value);
+            message.init(oscAddress).pushInt32(value);
             packetWriter_.init().addMessage(message);
             outSocket_->sendPacket(packetWriter_.packetData(), packetWriter_.packetSize());
         }
@@ -1662,6 +1767,7 @@ private:
     int trackOffset_ = 0;
     int vcaTrackOffset_ = 0;
     int folderTrackOffset_ = 0;
+    vector<MediaTrack*> tracks_;
     vector<MediaTrack*> selectedTracks_;
     vector<MediaTrack*> vcaTopLeadTracks_;
     vector<MediaTrack*> vcaLeadTracks_;
@@ -1707,8 +1813,9 @@ private:
     }
     
 public:
-    TrackNavigationManager(Page* page, bool synchPages, bool isScrollLinkEnabled) :
+    TrackNavigationManager(Page* page, bool followMCP,  bool synchPages, bool isScrollLinkEnabled) :
     page_(page),
+    followMCP_(followMCP),
     synchPages_(synchPages),
     isScrollLinkEnabled_(isScrollLinkEnabled),
     masterTrackNavigator_(new MasterTrackNavigator(page_)),
@@ -1731,6 +1838,8 @@ public:
         delete defaultNavigator_;
     }
     
+    void RebuildTracks();
+    void NextTrackVCAFolderMode(string params);
     bool GetSynchPages() { return synchPages_; }
     bool GetScrollLink() { return isScrollLinkEnabled_; }
     bool GetVCAMode() { return isVCAModeEnabled_; }
@@ -1741,24 +1850,11 @@ public:
     Navigator* GetFocusedFXNavigator() { return focusedFXNavigator_; }
     Navigator* GetDefaultNavigator() { return defaultNavigator_; }
     
-    void NextTrackVCAFolderMode()
+    bool GetIsTrackVisible(MediaTrack* track)
     {
-        currentTrackVCAFolderMode_ += 1;
-        
-        if(currentTrackVCAFolderMode_ > 2)
-            currentTrackVCAFolderMode_ = 0;
-        
-        if(currentTrackVCAFolderMode_ == 1)
-            isVCAModeEnabled_ = true;
-        else
-            isVCAModeEnabled_ = false;
-        
-        if(currentTrackVCAFolderMode_ == 2)
-            isFolderModeEnabled_ = true;
-        else
-            isFolderModeEnabled_ = false;
+        return DAW::IsTrackVisible(track, followMCP_);
     }
-    
+        
     void ResetTrackVCAFolderMode()
     {
         currentTrackVCAFolderMode_ = 0;
@@ -1798,11 +1894,83 @@ public:
             return autoModeDisplayNames__[autoModeIndex_];
     }
 
+    string GetGlobalAutoModeDisplayName()
+    {
+        int globalOverride = DAW::GetGlobalAutomationOverride();
+
+        if(globalOverride == -1)
+            return "NoOverride";
+        else if(globalOverride > -1) // -1=no override, 0=trim/read, 1=read, 2=touch, 3=write, 4=latch, 5=bypass
+            return autoModeDisplayNames__[globalOverride];
+        else
+            return "";
+    }
+
     string GetAutoModeDisplayName(int modeIndex)
     {
         return autoModeDisplayNames__[modeIndex];
     }
 
+    void NextInputMonitorMode(MediaTrack* track)
+    {
+        // I_RECMON : int * : record monitor (0=off, 1=normal, 2=not when playing (tapestyle))
+        int recMonitorMode = DAW::GetMediaTrackInfo_Value(track,"I_RECMON");
+
+        // I_RECMONITEMS : int * : monitor items while recording (0=off, 1=on)
+        int recMonitorItemMode = DAW::GetMediaTrackInfo_Value(track,"I_RECMONITEMS");
+
+        if(recMonitorMode == 0)
+        {
+            recMonitorMode = 1;
+            recMonitorItemMode = 0;
+        }
+        else if(recMonitorMode == 1 && recMonitorItemMode == 0)
+        {
+            recMonitorMode = 2;
+            recMonitorItemMode = 0;
+        }
+        else if(recMonitorMode == 2 && recMonitorItemMode == 0)
+        {
+            recMonitorMode = 1;
+            recMonitorItemMode = 1;
+        }
+        else if(recMonitorMode == 1 && recMonitorItemMode == 1)
+        {
+            recMonitorMode = 2;
+            recMonitorItemMode = 1;
+        }
+        else if(recMonitorMode == 2 && recMonitorItemMode == 1)
+        {
+            recMonitorMode = 0;
+            recMonitorItemMode = 0;
+        }
+
+        DAW::GetSetMediaTrackInfo(track, "I_RECMON", &recMonitorMode);
+        DAW::GetSetMediaTrackInfo(track, "I_RECMONITEMS", &recMonitorItemMode);
+    }
+    
+    string GetCurrentInputMonitorMode(MediaTrack* track)
+    {
+        // I_RECMON : int * : record monitor (0=off, 1=normal, 2=not when playing (tapestyle))
+        int recMonitorMode = DAW::GetMediaTrackInfo_Value(track,"I_RECMON");
+
+        // I_RECMONITEMS : int * : monitor items while recording (0=off, 1=on)
+        int recMonitorItemMode = DAW::GetMediaTrackInfo_Value(track,"I_RECMONITEMS");
+
+        if(recMonitorMode == 0)
+            return "Off";
+        else if(recMonitorMode == 1 && recMonitorItemMode == 0)
+            return "Input";
+        else if(recMonitorMode == 2 && recMonitorItemMode == 0)
+            return "Auto";
+        else if(recMonitorMode == 1 && recMonitorItemMode == 1)
+            return "Input+";
+        else if(recMonitorMode == 2 && recMonitorItemMode == 1)
+            return "Auto+";
+        else
+            return "";
+    }
+    
     vector<MediaTrack*> &GetSelectedTracks()
     {
         selectedTracks_.clear();
@@ -1831,8 +1999,6 @@ public:
             
             if(trackOffset_ >  top)
                 trackOffset_ = top;
-            
-            DAW:: SetProjExtState(0, "CSI", "BankIndex", to_string(trackOffset_).c_str());
         }
         else if(isVCAModeEnabled_)
         {
@@ -1879,10 +2045,13 @@ public:
     }
     
     MediaTrack* GetTrackFromChannel(int channelNumber)
-    {
+    {       
         if(! isVCAModeEnabled_ && ! isFolderModeEnabled_)
         {
-            return GetTrackFromId(channelNumber + trackOffset_ + 1);    // Master Track is idx 0, so add 1
+            if(channelNumber + trackOffset_ < GetNumTracks() && channelNumber + trackOffset_ < tracks_.size())
+                return tracks_[channelNumber + trackOffset_];
+            else
+                return nullptr;
         }
         else if(isFolderModeEnabled_)
         {
@@ -1976,19 +2145,19 @@ public:
        
     void OnTrackSelection()
     {
-        if(isScrollLinkEnabled_)
+        if(isScrollLinkEnabled_ && tracks_.size() > trackNavigators_.size())
             ForceScrollLink();
     }
     
     void OnTrackListChange()
     {
-        if(isScrollLinkEnabled_)
+        if(isScrollLinkEnabled_ && tracks_.size() > trackNavigators_.size())
             ForceScrollLink();
     }
 
     void OnTrackSelectionBySurface(MediaTrack* track)
     {
-        if(isScrollLinkEnabled_)
+        if(isScrollLinkEnabled_ && tracks_.size() > trackNavigators_.size())
         {
             if(DAW::IsTrackVisible(track, true))
                 DAW::SetMixerScroll(track); // scroll selected MCP tracks into view
@@ -2084,7 +2253,7 @@ public:
                 }
                 
                 if(isFollower)
-                        vcaSpillTracks_.push_back(track);
+                    vcaSpillTracks_.push_back(track);
             }
         }
     }
@@ -2156,7 +2325,7 @@ private:
     TrackNavigationManager* const trackNavigationManager_ = nullptr;
     
 public:
-    Page(string name, bool synchPages, bool isScrollLinkEnabled) : name_(name), trackNavigationManager_(new TrackNavigationManager(this, synchPages, isScrollLinkEnabled)) {}
+    Page(string name, bool followMCP,  bool synchPages, bool isScrollLinkEnabled) : name_(name), trackNavigationManager_(new TrackNavigationManager(this, followMCP, synchPages, isScrollLinkEnabled)) {}
     
     ~Page()
     {
@@ -2252,6 +2421,7 @@ public:
 //*
     void Run()
     {
+        trackNavigationManager_->RebuildTracks();
         trackNavigationManager_->RebuildVCASpill();
         trackNavigationManager_->RebuildFolderTracks();
         
@@ -2268,6 +2438,18 @@ public:
             surface->ForceClear();
     }
     
+    void ForceClearTrack(int trackNum)
+    {
+        for(auto surface : surfaces_)
+            surface->ForceClearTrack(trackNum);
+    }
+    
+    void ForceUpdateTrackColors()
+    {
+        for(auto surface : surfaces_)
+            surface->ForceUpdateTrackColors();
+    }
+
     void ForceRefreshTimeDisplay()
     {
         for(auto surface : surfaces_)
@@ -2392,6 +2574,24 @@ public:
             surface->OnInitialization();
     }
     
+    void SignalStop()
+    {
+        for(auto surface : surfaces_)
+            surface->HandleStop();
+    }
+    
+    void SignalPlay()
+    {
+        for(auto surface : surfaces_)
+            surface->HandlePlay();
+    }
+    
+    void SignalRecord()
+    {
+        for(auto surface : surfaces_)
+            surface->HandleRecord();
+    }
+    
     void SignalGoTrackFXSlot(ControlSurface* originatingSurface, MediaTrack* track, Navigator* navigator, int fxSlot)
     {
         for(auto surface : surfaces_)
@@ -2406,6 +2606,13 @@ public:
                 surface->GetZoneManager()->HandleActivation(zoneName);
     }
     
+    void SignalToggleEnableFocusedFXMapping(ControlSurface* originatingSurface)
+    {
+        for(auto surface : surfaces_)
+            if(surface != originatingSurface)
+                surface->GetZoneManager()->HandleToggleEnableFocusedFXMapping();
+    }
+
     void SignalTrackSendBank(ControlSurface* originatingSurface, int amount)
     {
         for(auto surface : surfaces_)
@@ -2427,6 +2634,39 @@ public:
                 surface->GetZoneManager()->HandleTrackFXMenuBank(amount);
     }
     
+    void SignalSelectedTrackSendBank(ControlSurface* originatingSurface, int amount)
+    {
+        for(auto surface : surfaces_)
+            if(surface != originatingSurface)
+                surface->GetZoneManager()->HandleSelectedTrackSendBank(amount);
+    }
+    
+    void SignalSelectedTrackReceiveBank(ControlSurface* originatingSurface, int amount)
+    {
+        for(auto surface : surfaces_)
+            if(surface != originatingSurface)
+                surface->GetZoneManager()->HandleSelectedTrackReceiveBank(amount);
+    }
+    
+    void SignalSelectedTrackFXMenuBank(ControlSurface* originatingSurface, int amount)
+    {
+        for(auto surface : surfaces_)
+            if(surface != originatingSurface)
+                surface->GetZoneManager()->HandleSelectedTrackFXMenuBank(amount);
+    }
+
+    void SetAllDisplaysColor(string color)
+    {
+        for(auto surface : surfaces_)
+            surface->SetAllDisplaysColor(color);
+    }
+    
+    void RestoreAllDisplaysColor()
+    {
+        for(auto surface : surfaces_)
+            surface->RestoreAllDisplaysColor();
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Page facade for TrackNavigationManager
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2439,20 +2679,24 @@ public:
     Navigator* GetFocusedFXNavigator() { return trackNavigationManager_->GetFocusedFXNavigator(); }
     Navigator* GetDefaultNavigator() { return trackNavigationManager_->GetDefaultNavigator(); }
     void AdjustTrackBank(int amount) { trackNavigationManager_->AdjustTrackBank(amount); }
-    void NextTrackVCAFolderMode() { trackNavigationManager_->NextTrackVCAFolderMode(); }
+    void NextTrackVCAFolderMode(string params) { trackNavigationManager_->NextTrackVCAFolderMode(params); }
     void ResetTrackVCAFolderMode() { trackNavigationManager_->ResetTrackVCAFolderMode(); }
     int GetCurrentTrackVCAFolderMode() { return trackNavigationManager_->GetCurrentTrackVCAFolderMode(); }
     Navigator* GetNavigatorForChannel(int channelNum) { return trackNavigationManager_->GetNavigatorForChannel(channelNum); }
     MediaTrack* GetTrackFromId(int trackNumber) { return trackNavigationManager_->GetTrackFromId(trackNumber); }
     int GetIdFromTrack(MediaTrack* track) { return trackNavigationManager_->GetIdFromTrack(track); }
+    bool GetIsTrackVisible(MediaTrack* track) { return trackNavigationManager_->GetIsTrackVisible(track); }
     void ToggleVCASpill(MediaTrack* track) { trackNavigationManager_->ToggleVCASpill(track); }
     void ToggleScrollLink(int targetChannel) { trackNavigationManager_->ToggleScrollLink(targetChannel); }
     void ToggleSynchPages() { trackNavigationManager_->ToggleSynchPages(); }
     MediaTrack* GetSelectedTrack() { return trackNavigationManager_->GetSelectedTrack(); }
     void SetAutoModeIndex() { trackNavigationManager_->SetAutoModeIndex(); }
     void NextAutoMode() { trackNavigationManager_->NextAutoMode(); }
+    void NextInputMonitorMode(MediaTrack* track) { trackNavigationManager_->NextInputMonitorMode(track); }
     string GetAutoModeDisplayName() { return trackNavigationManager_->GetAutoModeDisplayName(); }
+    string GetGlobalAutoModeDisplayName() { return trackNavigationManager_->GetGlobalAutoModeDisplayName(); }
     string GetAutoModeDisplayName(int modeIndex) { return trackNavigationManager_->GetAutoModeDisplayName(modeIndex); }
+    string GetCurrentInputMonitorMode(MediaTrack* track) { return trackNavigationManager_->GetCurrentInputMonitorMode(track); }
     vector<MediaTrack*> &GetSelectedTracks() { return trackNavigationManager_->GetSelectedTracks(); }
 };
 
@@ -2569,6 +2813,16 @@ public:
     double *GetTimeOffsPtr() { return timeOffsPtr_; }
     int GetProjectPanMode() { return *projectPanModePtr_; }
    
+    void Speak(string phrase)
+    {
+        const void (*osara_outputMessage)(const char* message) = nullptr;
+    
+        osara_outputMessage = (decltype(osara_outputMessage))plugin_getapi("osara_outputMessage");
+
+        if (osara_outputMessage)
+            osara_outputMessage(phrase.c_str());
+    }
+    
     shared_ptr<ActionContext> GetActionContext(string actionName, Widget* widget, shared_ptr<Zone> zone, vector<string> params, vector<vector<string>> properties)
     {
         if(actions_.count(actionName) > 0)

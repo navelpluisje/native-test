@@ -134,6 +134,8 @@ public:
     
     static double GetPlayPosition() { return ::GetPlayPosition(); }
     
+    static void format_timestr_pos(double tpos, char* buf, int buf_sz, int modeoverride) { ::format_timestr_pos(tpos, buf, buf_sz, modeoverride); }
+
     static void SetEditCurPos(double time, bool moveview, bool seekplay) { ::SetEditCurPos(time, moveview, seekplay);  }
 
     static double GetCursorPosition() { return ::GetCursorPosition(); }
@@ -170,6 +172,11 @@ public:
     static int ColorToNative(int r, int g, int b) { return ::ColorToNative(r, g, b); }
 
     static bool ValidateTrackPtr(MediaTrack* track) { return ValidatePtr(track, "MediaTrack*"); }
+    
+    static double TimeMap2_timeToBeats(ReaProject* proj, double tpos, int* measuresOutOptional, int* cmlOutOptional, double* fullbeatsOutOptional, int* cdenomOutOptional)
+    {
+        return ::TimeMap2_timeToBeats(proj, tpos, measuresOutOptional, cmlOutOptional, fullbeatsOutOptional, cdenomOutOptional);
+    }
     
     static bool CanUndo()
     {
@@ -311,6 +318,20 @@ public:
             ::TrackFX_SetEnabled(track, fx, enabled);
     }
     
+    static bool TrackFX_GetOffline(MediaTrack* track, int fx)
+    {
+        if(ValidateTrackPtr(track))
+            return ::TrackFX_GetOffline(track, fx);
+        else
+            return false;
+    }
+    
+    static void TrackFX_SetOffline(MediaTrack* track, int fx, bool offline)
+    {
+        if(ValidateTrackPtr(track))
+            ::TrackFX_SetOffline(track, fx, offline);
+    }
+
     static bool GetTrackName(MediaTrack* track, char* buf, int buf_sz)
     {
         if(ValidateTrackPtr(track))
