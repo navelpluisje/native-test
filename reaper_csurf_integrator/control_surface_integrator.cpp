@@ -284,6 +284,298 @@ static void PreProcessZoneFile(string filePath, ZoneManager* zoneManager)
     }
 }
 
+static void ExpandLine(int numChannels, vector<string> &tokens)
+{
+    if(tokens.size() == numChannels)
+        return;
+    else if(tokens.size() != 1)
+        return;
+
+    string templateString = tokens[0];
+    tokens.pop_back();
+    
+    for(int i = 1; i <= numChannels; i++)
+        tokens.push_back(regex_replace(templateString, regex("[|]"), to_string(i)));
+}
+
+static void GetWidgets(ZoneManager* zoneManager, int numChannels, vector<string> tokens, vector<Widget*> &results)
+{
+    vector<string> widgetLine;
+                        
+    for(int i = 1; i < tokens.size(); i++)
+        widgetLine.push_back(tokens[i]);
+
+    if(widgetLine.size() != numChannels)
+        ExpandLine(numChannels, widgetLine);
+
+    if(widgetLine.size() != numChannels)
+        return;
+    
+    vector<Widget*> widgets;
+    
+    for(auto widgetName : widgetLine)
+        if(Widget* widget = zoneManager->GetSurface()->GetWidgetByName(widgetName))
+            widgets.push_back(widget);
+    
+    if(widgets.size() != numChannels)
+        return;
+
+    results = widgets;
+}
+
+static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, vector<Navigator*> &navigators, vector<shared_ptr<Zone>> &zones, shared_ptr<Zone> enclosingZone)
+{
+    int lineNumber = 0;
+    string zoneName = "";
+    string zoneAlias = "";
+
+    int currentParamSet = -1;
+
+    map<int, vector<int>>     params;
+    map<int, vector<string>>  names;
+    map<int, vector<Widget*>> valueWidgets;
+    map<int, vector<Widget*>> nameDisplays;
+    map<int, vector<Widget*>> valueDisplays;
+    map<int, vector<string>>  modifiers;
+
+    map<int, vector<double>> accelerationValues;
+    vector<double>           defaultAccelerationValues;
+    map<int, vector<double>> rangeValues;
+    map<int, double>         stepSize;
+    map<int, vector<double>> stepValues;
+    map<int, vector<int>>    tickCounts;
+    map<int, string>         widgetModes;
+
+    try
+    {
+        ifstream file(filePath);
+        
+        for (string line; getline(file, line) ; )
+        {
+            line = regex_replace(line, regex(TabChars), " ");
+            line = regex_replace(line, regex(CRLFChars), "");
+            
+            lineNumber++;
+            
+            line = line.substr(0, line.find("//")); // remove trailing commewnts
+            
+            // Trim leading and trailing spaces
+            line = regex_replace(line, regex("^\\s+|\\s+$"), "", regex_constants::format_default);
+            
+            if(line == "" || (line.size() > 0 && line[0] == '/')) // ignore blank lines and comment lines
+                continue;
+            
+            vector<string> tokens(GetTokens(line));
+            
+            if(tokens.size() > 1)
+            {
+                if(tokens[0] == "Zone")
+                {
+                    zoneName = tokens.size() > 1 ? tokens[1] : "";
+                    zoneAlias = tokens.size() > 2 ? tokens[2] : "";
+                }
+                else if(tokens[0] == "FXParams")
+                {
+                    currentParamSet++;
+                    
+                    vector<int> paramLine;
+                    for(int i = 1; i < tokens.size(); i++)
+                        paramLine.push_back(stoi(tokens[i]));
+                                       
+                    params[currentParamSet] = paramLine;
+                }
+                else if(tokens[0] == "FXParamNames")
+                {
+                    vector<string> nameLine;
+                    for(int i = 1; i < tokens.size(); i++)
+                        nameLine.push_back(tokens[i]);
+                   
+                    names[currentParamSet] = nameLine;
+                }
+                else if(tokens[0] == "FXValueWidgets")
+                    GetWidgets(zoneManager, params[currentParamSet].size(), tokens, valueWidgets[currentParamSet]);
+                else if(tokens[0] == "FXParamNameDisplays")
+                    GetWidgets(zoneManager, params[currentParamSet].size(), tokens, nameDisplays[currentParamSet]);
+                else if(tokens[0] == "FXParamValueDisplays")
+                    GetWidgets(zoneManager, params[currentParamSet].size(), tokens, valueDisplays[currentParamSet]);
+                else if(tokens[0] == "FXWidgetModifiers")
+                {
+                    vector<string> modifierLine;
+                    
+                    for(int i = 0; i < params[currentParamSet].size(); i++)
+                        modifierLine.push_back(tokens[1]);
+
+                    if(modifierLine.size() != params[currentParamSet].size())
+                        continue;
+                    
+                    modifiers[currentParamSet] = modifierLine;
+                }
+                else if(tokens[0] == "DefaultAcceleration")
+                {
+                    if(tokens.size() < 2)
+                        continue;
+                    
+                    defaultAccelerationValues.clear();
+                    
+                    for(int i = 1; i < tokens.size(); i++)
+                        defaultAccelerationValues.push_back(stod(tokens[i]));
+                }
+                else if(tokens[0] == "FXParamAcceleration")
+                {
+                    if(tokens.size() < 3)
+                        continue;
+                    
+                    vector<double> acelValues;
+                    
+                    for(int i = 2; i < tokens.size(); i++)
+                        acelValues.push_back(stod(tokens[i]));
+                    
+                    accelerationValues[stoi(tokens[1])] = acelValues;
+                }
+                else if(tokens[0] == "FXParamRange")
+                {
+                    if(tokens.size() < 3)
+                        continue;
+                    
+                    vector<double> range;
+                    
+                    for(int i = 2; i < tokens.size(); i++)
+                        range.push_back(stod(tokens[i]));
+                    
+                    rangeValues[stoi(tokens[1])] = range;
+                }
+                else if(tokens[0] == "FXParamStepSize")
+                {
+                    if(tokens.size() < 3)
+                        continue;
+
+                    stepSize[stoi(tokens[1])] = stod(tokens[2]);
+                }
+                else if(tokens[0] == "FXParamStepValues")
+                {
+                    if(tokens.size() < 3)
+                        continue;
+                    
+                    vector<double> steps;
+                    
+                    for(int i = 2; i < tokens.size(); i++)
+                        steps.push_back(stod(tokens[i]));
+                    
+                    stepValues[stoi(tokens[1])] = steps;
+                }
+                else if(tokens[0] == "FXParamTickCounts")
+                {
+                    if(tokens.size() < 3)
+                        continue;
+                       
+                    vector<int> ticks;
+                    
+                    for(int i = 2; i < tokens.size(); i++)
+                        ticks.push_back(stod(tokens[i]));
+                    
+                    tickCounts[stoi(tokens[1])] = ticks;
+                }
+                else if(tokens[0] == "FXWidgetModes")
+                {
+                    if(tokens.size() < 3)
+                        continue;
+                                       
+                    widgetModes[stoi(tokens[1])] = tokens[2];
+                }
+            }
+            else if(tokens.size() > 0 && tokens[0] == "ZoneEnd")
+            {
+                vector<string> includedZones;
+                vector<string> associatedZones;
+                map<string, string> touchIds;
+
+                shared_ptr<Zone> zone;
+                
+                if(enclosingZone == nullptr)
+                    zone = make_shared<Zone>(zoneManager, navigators[0], 0, touchIds, zoneName, zoneAlias, filePath, includedZones, associatedZones);
+                else
+                    zone = make_shared<SubZone>(zoneManager, navigators[0], 0, touchIds, zoneName, zoneAlias, filePath, includedZones, associatedZones, enclosingZone);
+                                        
+                zones.push_back(zone);
+                                
+                for(int i = 0; i < params.size(); i++)
+                {
+                    for(int j = 0; j < params[i].size(); j++)
+                    {
+                        string modifierString = "";
+                        
+                        if(modifiers.count(i) > 0 && j < modifiers[i].size())
+                            modifierString = modifiers[i][j] + "+";
+                        
+                        if(valueWidgets.count(i) > 0 &&  j < valueWidgets[i].size())
+                        {
+                            zone->AddWidget(valueWidgets[i][j]);
+
+                            shared_ptr<ActionContext> context = nullptr;
+                            
+                            if(params[i][j] == -1)
+                                context = TheManager->GetActionContext("NoAction", valueWidgets[i][j], zone, params[i][j]);
+                            else
+                                context = TheManager->GetActionContext("FXParam", valueWidgets[i][j], zone, params[i][j]);
+                            
+                            if(accelerationValues.count(params[i][j]) > 0)
+                                context->SetAccelerationValues(accelerationValues[params[i][j]]);
+                            else if(defaultAccelerationValues.size() > 0)
+                                context->SetAccelerationValues(defaultAccelerationValues);
+                            
+                            if(rangeValues.count(params[i][j]) > 0)
+                                context->SetRange(rangeValues[params[i][j]]);
+
+                            if(stepSize.count(params[i][j]) > 0)
+                                context->SetStepSize(stepSize[params[i][j]]);
+
+                            if(stepValues.count(params[i][j]) > 0)
+                                context->SetStepValues(stepValues[params[i][j]]);
+                            
+                            if(tickCounts.count(params[i][j]) > 0)
+                                context->SetTickCounts(tickCounts[params[i][j]]);
+                            
+                            zone->AddActionContext(valueWidgets[i][j], modifierString, context);
+                        }
+                        
+                        if(nameDisplays.count(i) > 0 &&  j < nameDisplays[i].size())
+                        {
+                            zone->AddWidget(nameDisplays[i][j]);
+                            shared_ptr<ActionContext> context = nullptr;
+                            
+                            if(params[i][j] == -1)
+                                context = TheManager->GetActionContext("FixedTextDisplay", nameDisplays[i][j], zone, "");
+                            else
+                                context = TheManager->GetActionContext("FixedTextDisplay", nameDisplays[i][j], zone, names[i][j]);
+                            
+                            zone->AddActionContext(nameDisplays[i][j], modifierString, context);
+                        }
+                        
+                        if(valueDisplays.count(i) > 0 &&  j < valueDisplays[i].size())
+                        {
+                            zone->AddWidget(valueDisplays[i][j]);
+                            shared_ptr<ActionContext> context = nullptr;
+                            
+                            if(params[i][j] == -1)
+                                context = TheManager->GetActionContext("FixedTextDisplay", valueDisplays[i][j], zone, "");
+                            else
+                                context = TheManager->GetActionContext("FXParamValueDisplay", valueDisplays[i][j], zone, params[i][j]);
+                            
+                            zone->AddActionContext(valueDisplays[i][j], modifierString, context);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch (exception &e)
+    {
+        char buffer[250];
+        snprintf(buffer, sizeof(buffer), "Trouble in %s, around line %d\n", filePath.c_str(), lineNumber);
+        DAW::ShowConsoleMsg(buffer);
+    }
+}
+
 static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Navigator*> &navigators, vector<shared_ptr<Zone>> &zones, shared_ptr<Zone> enclosingZone)
 {
     bool isInIncludedZonesSection = false;
@@ -326,6 +618,13 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
             
             if(tokens.size() > 0)
             {
+                if(tokens[0] == "FXParams")
+                {
+                    file.close();
+                    ProcessFXZoneFile(filePath, zoneManager, navigators, zones, enclosingZone);
+                    return;
+                }
+                
                 if(tokens[0] == "Zone")
                 {
                     zoneName = tokens.size() > 1 ? tokens[1] : "";
@@ -498,7 +797,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
     }
 }
 
-void SetRGB(vector<string> params, bool &supportsRGB, bool &supportsTrackColor, vector<rgb_color> &RGBValues)
+void SetColor(vector<string> params, bool &supportsColor, bool &supportsTrackColor, vector<rgba_color> &colorValues)
 {
     vector<int> rawValues;
     
@@ -531,23 +830,23 @@ void SetRGB(vector<string> params, bool &supportsRGB, bool &supportsTrackColor, 
         
         if(rawValues.size() % 3 == 0 && rawValues.size() > 2)
         {
-            supportsRGB = true;
+            supportsColor = true;
             
             for(int i = 0; i < rawValues.size(); i += 3)
             {
-                rgb_color color;
+                rgba_color color;
                 
                 color.r = rawValues[i];
                 color.g = rawValues[i + 1];
                 color.b = rawValues[i + 2];
                 
-                RGBValues.push_back(color);
+                colorValues.push_back(color);
             }
         }
     }
 }
 
-void SetSteppedValues(vector<string> params, double &deltaValue, vector<double> &acceleratedDeltaValues, double &rangeMinimum, double &rangeMaximum, vector<double> &steppedValues, vector<int> &acceleratedTickValues)
+void GetSteppedValues(vector<string> params, double &deltaValue, vector<double> &acceleratedDeltaValues, double &rangeMinimum, double &rangeMaximum, vector<double> &steppedValues, vector<int> &acceleratedTickValues)
 {
     auto openSquareBrace = find(params.begin(), params.end(), "[");
     auto closeSquareBrace = find(params.begin(), params.end(), "]");
@@ -881,6 +1180,8 @@ static void ProcessOSCWidget(int &lineNumber, ifstream &surfaceTemplateFile, vec
     {
         if(tokenLine.size() > 1 && tokenLine[0] == "Control")
             new CSIMessageGenerator(widget, tokenLine[1]);
+        else if(tokenLine.size() > 1 && tokenLine[0] == "AnyPress")
+            new AnyPress_CSIMessageGenerator(widget, tokenLine[1]);
         else if(tokenLine.size() > 1 && tokenLine[0] == "Touch")
             new Touch_CSIMessageGenerator(widget, tokenLine[1]);
         else if(tokenLine.size() > 1 && tokenLine[0] == "FB_Processor")
@@ -961,6 +1262,9 @@ void Manager::InitActionsDictionary()
     actions_["ToggleSynchPageBanking"] =            new ToggleSynchPageBanking();
     actions_["ToggleScrollLink"] =                  new ToggleScrollLink();
     actions_["CycleTrackVCAFolderModes"] =          new CycleTrackVCAFolderModes();
+    actions_["GoTrack"] =                           new GoTrack();
+    actions_["GoVCA"] =                             new GoVCA();
+    actions_["GoFolder"] =                          new GoFolder();
     actions_["TrackVCAFolderModeDisplay"] =         new TrackVCAFolderModeDisplay();
     actions_["CycleTimeDisplayModes"] =             new CycleTimeDisplayModes();
     actions_["NextPage"] =                          new GoNextPage();
@@ -971,8 +1275,8 @@ void Manager::InitActionsDictionary()
     actions_["GoHome"] =                            new GoHome();
     actions_["GoSubZone"] =                         new GoSubZone();
     actions_["LeaveSubZone"] =                      new LeaveSubZone();
-    actions_["SetAllDisplaysColor"] =               new SetAllDisplaysColor();
-    actions_["RestoreAllDisplaysColor"] =           new RestoreAllDisplaysColor();
+    actions_["SetXTouchDisplayColors"] =            new SetXTouchDisplayColors();
+    actions_["RestoreXTouchDisplayColors"] =        new RestoreXTouchDisplayColors();
     actions_["GoFXSlot"] =                          new GoFXSlot();
     actions_["ToggleEnableFocusedFXMapping"] =      new ToggleEnableFocusedFXMapping();
     actions_["ToggleEnableFocusedFXParamMapping"] = new ToggleEnableFocusedFXParamMapping();
@@ -985,6 +1289,8 @@ void Manager::InitActionsDictionary()
     actions_["GoSelectedTrackReceive"] =            new GoSelectedTrackReceive();
     actions_["GoSelectedTrackFXMenu"] =             new GoSelectedTrackFXMenu();
     actions_["TrackBank"] =                         new TrackBank();
+    actions_["VCABank"] =                           new VCABank();
+    actions_["FolderBank"] =                        new FolderBank();
     actions_["TrackSendBank"] =                     new TrackSendBank();
     actions_["TrackReceiveBank"] =                  new TrackReceiveBank();
     actions_["TrackFXMenuBank"] =                   new TrackFXMenuBank();
@@ -1004,6 +1310,9 @@ void Manager::InitActionsDictionary()
     actions_["SoftTakeover14BitTrackVolume"] =      new SoftTakeover14BitTrackVolume();
     actions_["TrackVolumeDB"] =                     new TrackVolumeDB();
     actions_["TrackToggleVCASpill"] =               new TrackToggleVCASpill();
+    actions_["TrackVCALeaderDisplay"] =             new TrackVCALeaderDisplay();
+    actions_["TrackToggleFolderSpill"] =            new TrackToggleFolderSpill();
+    actions_["TrackFolderParentDisplay"] =          new TrackFolderParentDisplay();
     actions_["TrackSelect"] =                       new TrackSelect();
     actions_["TrackUniqueSelect"] =                 new TrackUniqueSelect();
     actions_["TrackRangeSelect"] =                  new TrackRangeSelect();
@@ -1364,8 +1673,8 @@ ActionContext::ActionContext(Action* action, Widget* widget, shared_ptr<Zone> zo
 
     if(params.size() > 0)
     {
-        SetRGB(params, supportsRGB_, supportsTrackColor_, RGBValues_);
-        SetSteppedValues(params, deltaValue_, acceleratedDeltaValues_, rangeMinimum_, rangeMaximum_, steppedValues_, acceleratedTickValues_);
+        SetColor(params, supportsColor_, supportsTrackColor_, colorValues_);
+        GetSteppedValues(params, deltaValue_, acceleratedDeltaValues_, rangeMinimum_, rangeMaximum_, steppedValues_, acceleratedTickValues_);
     }
     
     if(acceleratedTickValues_.size() < 1)
@@ -1426,13 +1735,13 @@ void ActionContext::ClearWidget()
     widget_->Clear();
 }
 
-void ActionContext::UpdateRGBValue(double value)
+void ActionContext::UpdateColorValue(double value)
 {
-    if(supportsRGB_)
+    if(supportsColor_)
     {
-        currentRGBIndex_ = value == 0 ? 0 : 1;
-        if(RGBValues_.size() > currentRGBIndex_)
-            widget_->UpdateRGBValue(RGBValues_[currentRGBIndex_].r, RGBValues_[currentRGBIndex_].g, RGBValues_[currentRGBIndex_].b);
+        currentColorIndex_ = value == 0 ? 0 : 1;
+        if(colorValues_.size() > currentColorIndex_)
+            widget_->UpdateColorValue(colorValues_[currentColorIndex_].a, colorValues_[currentColorIndex_].r, colorValues_[currentColorIndex_].g, colorValues_[currentColorIndex_].b);
     }
 }
 
@@ -1445,7 +1754,7 @@ void ActionContext::UpdateWidgetValue(double value)
    
     widget_->UpdateValue(value);
 
-    UpdateRGBValue(value);
+    UpdateColorValue(value);
     
     if(supportsTrackColor_)
         UpdateTrackColor();
@@ -1455,8 +1764,8 @@ void ActionContext::UpdateTrackColor()
 {
     if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
     {
-        rgb_color color = DAW::GetTrackColor(track);
-        widget_->UpdateRGBValue(color.r, color.g, color.b);
+        rgba_color color = DAW::GetTrackColor(track);
+        widget_->UpdateColorValue(color.a, color.r, color.g, color.b);
     }
 }
 
@@ -1714,7 +2023,7 @@ void Zone::AddNavigatorsForZone(string zoneName, vector<Navigator*> &navigators)
         navigators.push_back(zoneManager_->GetSelectedTrackNavigator());
     else if(zoneName == "MasterTrack")
         navigators.push_back(zoneManager_->GetMasterTrackNavigator());
-    else if(zoneName == "Track" || zoneName == "TrackSend" || zoneName == "TrackReceive" || zoneName == "TrackFXMenu" )
+    else if(zoneName == "Track" || zoneName == "VCA" || zoneName == "Folder" || zoneName == "TrackSend" || zoneName == "TrackReceive" || zoneName == "TrackFXMenu" )
         for(int i = 0; i < zoneManager_->GetNumChannels(); i++)
             navigators.push_back(zoneManager_->GetSurface()->GetPage()->GetNavigatorForChannel(i + zoneManager_->GetSurface()->GetChannelOffset()));
     else if(zoneName == "SelectedTrack" || zoneName == "SelectedTrackSend" || zoneName == "SelectedTrackReceive" || zoneName == "SelectedTrackFXMenu")
@@ -1722,16 +2031,16 @@ void Zone::AddNavigatorsForZone(string zoneName, vector<Navigator*> &navigators)
             navigators.push_back(zoneManager_->GetSelectedTrackNavigator());
 }
 
-void Zone::SetAllDisplaysColor(string color)
+void Zone::SetXTouchDisplayColors(string color)
 {
     for(auto [widget, isUsed] : widgets_)
-        widget->SetAllDisplaysColor(color);
+        widget->SetXTouchDisplayColors(color);
 }
 
-void Zone::RestoreAllDisplaysColor()
+void Zone::RestoreXTouchDisplayColors()
 {
     for(auto [widget, isUsed] : widgets_)
-        widget->RestoreAllDisplaysColor();
+        widget->RestoreXTouchDisplayColors();
 }
 
 void Zone::Activate()
@@ -1755,6 +2064,40 @@ void Zone::Activate()
     for(auto [key, zones] : subZones_)
         for(auto zone : zones)
             zone->Deactivate();
+}
+
+void Zone::GoTrack()
+{
+    for(auto [key, zones] : associatedZones_)
+        for(auto zone : zones)
+            if(zone->GetName() == "VCA" || zone->GetName() == "Folder")
+                zone->Deactivate();
+}
+
+void Zone::GoVCA()
+{
+    for(auto [key, zones] : associatedZones_)
+        for(auto zone : zones)
+            if(zone->GetName() == "Folder")
+                zone->Deactivate();
+        
+    for(auto [key, zones] : associatedZones_)
+        for(auto zone : zones)
+            if(zone->GetName() == "VCA")
+                zone->Activate();
+}
+
+void Zone::GoFolder()
+{
+    for(auto [key, zones] : associatedZones_)
+        for(auto zone : zones)
+            if(zone->GetName() == "VCA")
+                zone->Deactivate();
+    
+    for(auto [key, zones] : associatedZones_)
+        for(auto zone : zones)
+            if(zone->GetName() == "Folder")
+                zone->Activate();
 }
 
 void Zone::OnTrackDeselection()
@@ -2023,22 +2366,22 @@ void  Widget::UpdateMode(string modeParams)
         processor->SetMode(modeParams);
 }
 
-void  Widget::UpdateRGBValue(int r, int g, int b)
+void  Widget::UpdateColorValue(int a, int r, int g, int b)
 {
     for(auto processor : feedbackProcessors_)
-        processor->SetRGBValue(r, g, b);
+        processor->SetColorValue(a, r, g, b);
 }
 
-void Widget::SetAllDisplaysColor(string color)
+void Widget::SetXTouchDisplayColors(string color)
 {
     for(auto processor : feedbackProcessors_)
-        processor->SetAllDisplaysColor(color);
+        processor->SetXTouchDisplayColors(color);
 }
 
-void Widget::RestoreAllDisplaysColor()
+void Widget::RestoreXTouchDisplayColors()
 {
     for(auto processor : feedbackProcessors_)
-        processor->RestoreAllDisplaysColor();
+        processor->RestoreXTouchDisplayColors();
 }
 
 void  Widget::Clear()
@@ -2096,7 +2439,7 @@ void Midi_FeedbackProcessor::ForceMidiMessage(int first, int second, int third)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // OSC_FeedbackProcessor
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-void OSC_FeedbackProcessor::SetRGBValue(int r, int g, int b)
+void OSC_FeedbackProcessor::SetColorValue(int a, int r, int g, int b)
 {
     if(lastRValue_ != r)
     {
@@ -2186,7 +2529,7 @@ void ZoneManager::RequestUpdate()
         {
             key->UpdateValue(0.0);
             key->UpdateValue("");
-            key->UpdateRGBValue(0, 0, 0);
+            key->UpdateColorValue(255, 0, 0, 0);
         }
     }
 }
@@ -2340,6 +2683,24 @@ void ZoneManager::GoHome()
     }
 }
 
+void ZoneManager::GoTrack()
+{
+    if(homeZone_ != nullptr)
+        homeZone_->GoTrack();
+}
+
+void ZoneManager::GoVCA()
+{
+    if(homeZone_ != nullptr)
+        homeZone_->GoVCA();
+}
+
+void ZoneManager::GoFolder()
+{
+    if(homeZone_ != nullptr)
+        homeZone_->GoFolder();
+}
+
 void ZoneManager::OnTrackSelection()
 {
     fxSlotZones_.clear();
@@ -2445,39 +2806,22 @@ void TrackNavigationManager::RebuildTracks()
         page_->ForceUpdateTrackColors();
 }
 
-void TrackNavigationManager::NextTrackVCAFolderMode(string params)
+void TrackNavigationManager::NextTrackVCAFolderMode()
 {
-    string VCAColor = "White";
-    string FolderColor = "White";
-    
-    vector<string> tokens = GetTokens(params);
-    
-    if(tokens.size()  == 2)
+    if(currentTrackVCAFolderMode_ == 0 && page_->GetDoesAssociatedZoneExist("VCA"))
     {
-        VCAColor = tokens[0];
-        FolderColor = tokens[1];
+        currentTrackVCAFolderMode_ = 1;
+        page_->GoVCA();
     }
-    
-    currentTrackVCAFolderMode_ += 1;
-    
-    if(currentTrackVCAFolderMode_ > 2)
+    else if((currentTrackVCAFolderMode_ == 0 || currentTrackVCAFolderMode_ == 1) && page_->GetDoesAssociatedZoneExist("Folder"))
     {
-        page_->RestoreAllDisplaysColor();
+        currentTrackVCAFolderMode_ = 2;
+        page_->GoFolder();
+    }
+    else
+    {
         currentTrackVCAFolderMode_ = 0;
-        isVCAModeEnabled_ = false;
-        isFolderModeEnabled_ = false;
-    }
-    else if(currentTrackVCAFolderMode_ == 1)
-    {
-        page_->SetAllDisplaysColor(VCAColor);
-        isVCAModeEnabled_ = true;
-        isFolderModeEnabled_ = false;
-    }
-    else if(currentTrackVCAFolderMode_ == 2)
-    {
-        page_->SetAllDisplaysColor(FolderColor);
-        isFolderModeEnabled_ = true;
-        isVCAModeEnabled_ = false;
+        page_->GoTrack();
     }
 }
 

@@ -264,9 +264,9 @@ private:
     bool shouldUseDisplayStyle_ = false;
     int displayStyle_ = 0;
     
-    bool supportsRGB_ = false;
-    vector<rgb_color> RGBValues_;
-    int currentRGBIndex_ = 0;
+    bool supportsColor_ = false;
+    vector<rgba_color> colorValues_;
+    int currentColorIndex_ = 0;
     
     bool supportsTrackColor_ = false;
         
@@ -280,6 +280,16 @@ private:
 
 public:
     ActionContext(Action* action, Widget* widget, shared_ptr<Zone> zone, vector<string> params, vector<vector<string>> properties);
+    ActionContext(Action* action, Widget* widget, shared_ptr<Zone> zone, int paramIndex) : action_(action), widget_(widget), zone_(zone), paramIndex_(paramIndex)
+    {
+        if(acceleratedTickValues_.size() < 1)
+            acceleratedTickValues_.push_back(10);
+    }
+    ActionContext(Action* action, Widget* widget, shared_ptr<Zone> zone, string stringParam) : action_(action), widget_(widget), zone_(zone), stringParam_(stringParam)
+    {
+        if(acceleratedTickValues_.size() < 1)
+            acceleratedTickValues_.push_back(10);
+    }
 
     virtual ~ActionContext() {}
     
@@ -287,7 +297,7 @@ public:
     shared_ptr<Zone> GetZone() { return zone_; }
     int GetSlotIndex();
     string GetName();
-
+    
     vector<string> &GetZoneNames() { return  zoneNames_; }
 
     int GetIntParam() { return intParam_; }
@@ -306,9 +316,7 @@ public:
     Page* GetPage();
     ControlSurface* GetSurface();
     int GetParamIndex() { return paramIndex_; }
-    
-    bool GetSupportsRGB() { return supportsRGB_; }
-    
+       
     void SetIsFeedbackInverted() { isFeedbackInverted_ = true; }
     void SetHoldDelayAmount(double holdDelayAmount) { holdDelayAmount_ = holdDelayAmount * 1000.0; } // holdDelayAmount is specified in seconds, holdDelayAmount_ is in milliseconds
     
@@ -323,13 +331,27 @@ public:
     void UpdateWidgetValue(double value);
     void UpdateWidgetValue(string value);
     void UpdateWidgetMode(string modeParams);
-    void UpdateRGBValue(double value);
+    void UpdateColorValue(double value);
 
     void DoTouch(double value)
     {
         action_->Touch(this, value);
     }
 
+    void SetAccelerationValues(vector<double> acceleratedDeltaValues) { acceleratedDeltaValues_ = acceleratedDeltaValues; }
+    void SetStepSize(double deltaValue) { deltaValue_ = deltaValue; }
+    void SetStepValues(vector<double> steppedValues) { steppedValues_ = steppedValues; }
+    void SetTickCounts(vector<int> acceleratedTickValues) { acceleratedTickValues_ = acceleratedTickValues; }
+    
+    void SetRange(vector<double> range)
+    {
+        if(range.size() != 2)
+            return;
+        
+        rangeMinimum_ = range[0];
+        rangeMaximum_ = range[1];
+    }
+    
     string GetFxParamDisplayName()
     {
         if(fxParamDisplayName_ != "")
@@ -342,22 +364,6 @@ public:
         }
         
         return "";
-    }
-
-    void SetCurrentRGB(rgb_color newColor)
-    {
-        supportsRGB_ = true;
-        if(RGBValues_.size() > currentRGBIndex_)
-            RGBValues_[currentRGBIndex_] = newColor;
-    }
-    
-    rgb_color GetCurrentRGB()
-    {
-        rgb_color blankColor;
-        
-        if(RGBValues_.size() > currentRGBIndex_)
-            return RGBValues_[currentRGBIndex_];
-        else return blankColor;
     }
     
     void SetSteppedValueIndex(double value)
@@ -499,8 +505,8 @@ public:
     Navigator* GetNavigator() { return navigator_; }
     void SetSlotIndex(int index) { slotIndex_ = index; }
     int GetSlotIndex();
-    void SetAllDisplaysColor(string color);
-    void RestoreAllDisplaysColor();
+    void SetXTouchDisplayColors(string color);
+    void RestoreXTouchDisplayColors();
 
     vector<shared_ptr<ActionContext>> &GetActionContexts(Widget* widget);
         
@@ -508,6 +514,9 @@ public:
     void RequestUpdateWidget(Widget* widget);
     void Activate();
     void Deactivate();
+    void GoTrack();
+    void GoVCA();
+    void GoFolder();
     void OnTrackDeselection();
     void DoAction(Widget* widget, bool &isUsed, double value);
     void DoRelativeAction(Widget* widget, bool &isUsed, double delta);
@@ -516,6 +525,8 @@ public:
     map<Widget*, bool> &GetWidgets() { return widgets_; }
     bool GetIsActive() { return isActive_; }
     int GetChannelNumber();
+    
+    bool GetDoesAssociatedZoneExist(string associatedZoneName) { return associatedZones_.count(associatedZoneName) > 0;  }
     
     bool GetIsMainZoneOnlyActive()
     {
@@ -638,9 +649,9 @@ public:
     void UpdateMode(string modeParams);
     void UpdateValue(double value);
     void UpdateValue(string value);
-    void UpdateRGBValue(int r, int g, int b);
-    void SetAllDisplaysColor(string color);
-    void RestoreAllDisplaysColor();
+    void UpdateColorValue(int a, int r, int g, int b);
+    void SetXTouchDisplayColors(string color);
+    void RestoreXTouchDisplayColors();
     void Clear();
     void ForceClear();
     void LogInput(double value);
@@ -728,8 +739,11 @@ public:
     Navigator* GetFocusedFXNavigator();
     Navigator* GetDefaultNavigator();
     
-    int GetNumChannels();
+    int  GetNumChannels();
     void GoHome();
+    void GoTrack();
+    void GoVCA();
+    void GoFolder();
     void OnTrackSelection();
     void OnTrackDeselection();
     void GoFocusedFX();
@@ -767,18 +781,14 @@ public:
     
     bool GetIsFocusedFXParamMappingEnabled() { return isFocusedFXParamMappingEnabled_; }
     
-    void SetAllDisplaysColor(string color)
+    bool GetDoesAssociatedZoneExist(string associatedZoneName)
     {
-        if(firstTrackZone_)
-            firstTrackZone_->SetAllDisplaysColor(color);
+        if(homeZone_ !=  nullptr)
+            return homeZone_->GetDoesAssociatedZoneExist(associatedZoneName);
+        else
+            return false;
     }
     
-    void RestoreAllDisplaysColor()
-    {
-        if(firstTrackZone_)
-            firstTrackZone_->RestoreAllDisplaysColor();
-    }
-
     void ToggleEnableFocusedFXParamMapping()
     {
         isFocusedFXParamMappingEnabled_ = ! isFocusedFXParamMappingEnabled_;
@@ -1143,6 +1153,20 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class AnyPress_CSIMessageGenerator : CSIMessageGenerator
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    AnyPress_CSIMessageGenerator(Widget* widget, string message) : CSIMessageGenerator(widget, message) {}
+    virtual ~AnyPress_CSIMessageGenerator() {}
+    
+    virtual void ProcessMessage(double value) override
+    {
+        widget_->GetZoneManager()->DoAction(widget_, 1.0);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Touch_CSIMessageGenerator : CSIMessageGenerator
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -1278,15 +1302,7 @@ public:
     bool GetIsRewinding() { return isRewinding_; }
     bool GetIsFastForwarding() { return isFastForwarding_; }
 
-    void SetAllDisplaysColor(string color)
-    {
-        zoneManager_->SetAllDisplaysColor(color);
-    }
-    
-    void RestoreAllDisplaysColor()
-    {
-        zoneManager_->RestoreAllDisplaysColor();
-    }
+    bool GetDoesAssociatedZoneExist(string associatedZoneName) { return zoneManager_->GetDoesAssociatedZoneExist(associatedZoneName); }
 
     void ToggleChannel(int channelNum)
     {
@@ -1446,17 +1462,17 @@ public:
     virtual ~FeedbackProcessor() {}
     virtual string GetName()  { return "FeedbackProcessor"; }
     Widget* GetWidget() { return widget_; }
-    virtual void SetRGBValue(int r, int g, int b) {}
+    virtual void SetColorValue(int a, int r, int g, int b) {}
     virtual void ForceValue(double value) {}
-    virtual void ForceRGBValue(int r, int g, int b) {}
+    virtual void ForceColorValue(int a, int r, int g, int b) {}
     virtual void ForceValue(string value) {}
-    virtual void SetColors(rgb_color textColor, rgb_color textBackground) {}
+    virtual void SetColors(rgba_color textColor, rgba_color textBackground) {}
     virtual void SetCurrentColor(double value) {}
     virtual void SetProperties(vector<vector<string>> properties) {}
     virtual void UpdateTrackColors() {}
     virtual void ForceUpdateTrackColors() {}
-    virtual void SetAllDisplaysColor(string color) {}
-    virtual void RestoreAllDisplaysColor() {}
+    virtual void SetXTouchDisplayColors(string color) {}
+    virtual void RestoreXTouchDisplayColors() {}
 
     virtual int GetMaxCharacters() { return 0; }
     
@@ -1488,14 +1504,14 @@ public:
     {
         SetValue(0.0);
         SetValue("");
-        SetRGBValue(0, 0, 0);
+        SetColorValue(255, 0, 0, 0);
     }
     
     void ForceClear()
     {
         ForceValue(0.0);
         ForceValue("");
-        ForceRGBValue(0, 0, 0);
+        ForceColorValue(255, 0, 0, 0);
     }
 };
 
@@ -1641,7 +1657,7 @@ public:
 
     virtual string GetName() override { return "OSC_FeedbackProcessor"; }
 
-    virtual void SetRGBValue(int r, int g, int b) override;
+    virtual void SetColorValue(int a, int r, int g, int b) override;
     virtual void ForceValue(double value) override;
     virtual void ForceValue(string value) override;
 };
@@ -1760,8 +1776,6 @@ private:
     bool followMCP_ = true;
     bool synchPages_ = true;
     bool isScrollLinkEnabled_ = false;
-    bool isVCAModeEnabled_ = false;
-    bool isFolderModeEnabled_ = false;
     int currentTrackVCAFolderMode_ = 0;
     int targetScrollLinkChannel_ = 0;
     int trackOffset_ = 0;
@@ -1769,10 +1783,18 @@ private:
     int folderTrackOffset_ = 0;
     vector<MediaTrack*> tracks_;
     vector<MediaTrack*> selectedTracks_;
+    
     vector<MediaTrack*> vcaTopLeadTracks_;
+    MediaTrack*         vcaLeadTrack_ = nullptr;
     vector<MediaTrack*> vcaLeadTracks_;
     vector<MediaTrack*> vcaSpillTracks_;
-    vector<MediaTrack*> folderTracks_;
+    
+    vector<MediaTrack*> folderTopParentTracks_;
+    MediaTrack*         folderParentTrack_ = nullptr;
+    vector<MediaTrack*> folderParentTracks_;
+    vector<MediaTrack*> folderSpillTracks_;
+    map<MediaTrack*,    vector<MediaTrack*>> folderDictionary_;
+
     map<int, Navigator*> trackNavigators_;
     Navigator* const masterTrackNavigator_ = nullptr;
     Navigator* const selectedTrackNavigator_ = nullptr;
@@ -1780,7 +1802,6 @@ private:
     Navigator* const defaultNavigator_ = nullptr;
     
     vector<string> autoModeDisplayNames__ = { "Trim", "Read", "Touch", "Write", "Latch", "LtchPre" };
-    int autoModeIndex_ = 0;
     
     void ForceScrollLink()
     {
@@ -1839,17 +1860,28 @@ public:
     }
     
     void RebuildTracks();
-    void NextTrackVCAFolderMode(string params);
+    void NextTrackVCAFolderMode();
     bool GetSynchPages() { return synchPages_; }
     bool GetScrollLink() { return isScrollLinkEnabled_; }
-    bool GetVCAMode() { return isVCAModeEnabled_; }
-    int GetCurrentTrackVCAFolderMode() { return currentTrackVCAFolderMode_; }
+    int  GetCurrentTrackVCAFolderMode() { return currentTrackVCAFolderMode_; }
     int  GetNumTracks() { return DAW::CSurf_NumTracks(followMCP_); }
     Navigator* GetMasterTrackNavigator() { return masterTrackNavigator_; }
     Navigator* GetSelectedTrackNavigator() { return selectedTrackNavigator_; }
     Navigator* GetFocusedFXNavigator() { return focusedFXNavigator_; }
     Navigator* GetDefaultNavigator() { return defaultNavigator_; }
     
+    string GetCurrentTrackVCAFolderModeDisplay()
+    {
+        if(currentTrackVCAFolderMode_ == 0)
+            return "Track";
+        else if(currentTrackVCAFolderMode_ == 1)
+            return "VCA";
+        else if(currentTrackVCAFolderMode_ == 2)
+            return "Folder";
+        else
+            return "";
+    }
+
     bool GetIsTrackVisible(MediaTrack* track)
     {
         return DAW::IsTrackVisible(track, followMCP_);
@@ -1858,40 +1890,16 @@ public:
     void ResetTrackVCAFolderMode()
     {
         currentTrackVCAFolderMode_ = 0;
-        isVCAModeEnabled_ = false;
-        isFolderModeEnabled_ = false;
     }
     
-    void SetAutoModeIndex()
-    {
-        if(MediaTrack* track =  GetSelectedTrackNavigator()->GetTrack())
-            autoModeIndex_ = DAW::GetMediaTrackInfo_Value(track, "I_AUTOMODE");
-    }
-    
-    void NextAutoMode()
-    {
-        if(MediaTrack* track = GetSelectedTrackNavigator()->GetTrack())
-        {
-            if(autoModeIndex_ == 2) // skip over write mode when cycling
-                autoModeIndex_ += 2;
-            else
-                autoModeIndex_++;
-            
-            if(autoModeIndex_ > autoModeDisplayNames__.size() - 1)
-                autoModeIndex_ = 0;
-    
-            DAW::GetSetMediaTrackInfo(track, "I_AUTOMODE", &autoModeIndex_);
-        }
-    }
-    
-    string GetAutoModeDisplayName()
+    string GetAutoModeDisplayName(int modeIndex)
     {
         int globalOverride = DAW::GetGlobalAutomationOverride();
 
         if(globalOverride > -1) // -1=no override, 0=trim/read, 1=read, 2=touch, 3=write, 4=latch, 5=bypass
             return autoModeDisplayNames__[globalOverride];
         else
-            return autoModeDisplayNames__[autoModeIndex_];
+            return autoModeDisplayNames__[modeIndex];
     }
 
     string GetGlobalAutoModeDisplayName()
@@ -1904,11 +1912,6 @@ public:
             return autoModeDisplayNames__[globalOverride];
         else
             return "";
-    }
-
-    string GetAutoModeDisplayName(int modeIndex)
-    {
-        return autoModeDisplayNames__[modeIndex];
     }
 
     void NextInputMonitorMode(MediaTrack* track)
@@ -1983,57 +1986,65 @@ public:
 
     void AdjustTrackBank(int amount)
     {
-        if(! isVCAModeEnabled_ && ! isFolderModeEnabled_)
-        {
-            int numTracks = GetNumTracks();
+        if(currentTrackVCAFolderMode_ != 0)
+            return;
+
+        int numTracks = GetNumTracks();
+        
+        if(numTracks <= trackNavigators_.size())
+            return;
+       
+        trackOffset_ += amount;
+        
+        if(trackOffset_ <  0)
+            trackOffset_ =  0;
+        
+        int top = numTracks - trackNavigators_.size();
+        
+        if(trackOffset_ >  top)
+            trackOffset_ = top;
+    }
+    
+    void AdjustVCABank(int amount)
+    {
+        if(currentTrackVCAFolderMode_ != 1)
+            return;
+
+        int numTracks = vcaSpillTracks_.size();
             
-            if(numTracks <= trackNavigators_.size())
-                return;
-           
-            trackOffset_ += amount;
-            
-            if(trackOffset_ <  0)
-                trackOffset_ =  0;
-            
-            int top = numTracks - trackNavigators_.size();
-            
-            if(trackOffset_ >  top)
-                trackOffset_ = top;
-        }
-        else if(isVCAModeEnabled_)
-        {
-            int numTracks = vcaSpillTracks_.size() + vcaLeadTracks_.size();
-            
-            if(numTracks <= trackNavigators_.size())
-                return;
-           
-            vcaTrackOffset_ += amount;
-            
-            if(vcaTrackOffset_ <  0)
-                vcaTrackOffset_ =  0;
-            
-            int top = numTracks - trackNavigators_.size();
-            
-            if(vcaTrackOffset_ >  top)
-                vcaTrackOffset_ = top;
-        }
-        else if(isFolderModeEnabled_)
-        {
-            int numTracks = folderTracks_.size();
-            
-            if(numTracks <= trackNavigators_.size())
-                return;
-           
-            folderTrackOffset_ += amount;
-            
-            if(folderTrackOffset_ <  0)
-                folderTrackOffset_ =  0;
-            
-            int top = numTracks - trackNavigators_.size();
-            
-            if(folderTrackOffset_ >  top)
-                folderTrackOffset_ = top;
-        }
+        if(numTracks <= trackNavigators_.size())
+            return;
+       
+        vcaTrackOffset_ += amount;
+        
+        if(vcaTrackOffset_ <  0)
+            vcaTrackOffset_ =  0;
+        
+        int top = numTracks - trackNavigators_.size();
+        
+        if(vcaTrackOffset_ >  top)
+            vcaTrackOffset_ = top;
+    }
+    
+    void AdjustFolderBank(int amount)
+    {
+        if(currentTrackVCAFolderMode_ != 2)
+            return;
+
+        int numTracks = folderSpillTracks_.size();
+        
+        if(numTracks <= trackNavigators_.size())
+            return;
+       
+        folderTrackOffset_ += amount;
+        
+        if(folderTrackOffset_ <  0)
+            folderTrackOffset_ =  0;
+        
+        int top = numTracks - trackNavigators_.size();
+        
+        if(folderTrackOffset_ >  top)
+            folderTrackOffset_ = top;
     }
     
     Navigator* GetNavigatorForChannel(int channelNum)
@@ -2046,41 +2057,58 @@ public:
     
     MediaTrack* GetTrackFromChannel(int channelNumber)
     {       
-        if(! isVCAModeEnabled_ && ! isFolderModeEnabled_)
+        if(currentTrackVCAFolderMode_ == 0)
         {
             if(channelNumber + trackOffset_ < GetNumTracks() && channelNumber + trackOffset_ < tracks_.size())
                 return tracks_[channelNumber + trackOffset_];
             else
                 return nullptr;
         }
-        else if(isFolderModeEnabled_)
+        else if(currentTrackVCAFolderMode_ == 1)
         {
-            if(channelNumber < folderTracks_.size())
-                return folderTracks_[channelNumber];
-            else
-                return nullptr;
-        }
-        else if(isVCAModeEnabled_)
-        {
-            if(vcaLeadTracks_.size() == 0)
+            if(vcaLeadTrack_ == nullptr)
             {
-                if(vcaTopLeadTracks_.size() > channelNumber && DAW::ValidateTrackPtr(vcaTopLeadTracks_[channelNumber]))
+                if(channelNumber < vcaTopLeadTracks_.size() && DAW::ValidateTrackPtr(vcaTopLeadTracks_[channelNumber]))
                     return vcaTopLeadTracks_[channelNumber];
                 else
                     return nullptr;
             }
             else
             {
-                if(channelNumber < vcaLeadTracks_.size())
-                    return vcaLeadTracks_[channelNumber];
+                if(channelNumber == 0 && vcaSpillTracks_.size() > 0 && DAW::ValidateTrackPtr(vcaSpillTracks_[channelNumber]))
+                    return vcaSpillTracks_[channelNumber];
+                else if(vcaTrackOffset_ == 0 && channelNumber < vcaSpillTracks_.size() && DAW::ValidateTrackPtr(vcaSpillTracks_[channelNumber]))
+                    return vcaSpillTracks_[channelNumber];
                 else
                 {
-                    channelNumber -= vcaLeadTracks_.size();
-                    
                     channelNumber += vcaTrackOffset_;
                     
-                    if(channelNumber < vcaSpillTracks_.size())
+                    if(channelNumber < vcaSpillTracks_.size() && DAW::ValidateTrackPtr(vcaSpillTracks_[channelNumber]))
                         return vcaSpillTracks_[channelNumber];
+                }
+            }
+        }
+        else if(currentTrackVCAFolderMode_ == 2)
+        {
+            if(folderParentTrack_ == nullptr)
+            {
+                if(channelNumber < folderTopParentTracks_.size() && DAW::ValidateTrackPtr(folderTopParentTracks_[channelNumber]))
+                    return folderTopParentTracks_[channelNumber];
+                else
+                    return nullptr;
+            }
+            else
+            {
+                if(channelNumber == 0 && folderSpillTracks_.size() > 0 && DAW::ValidateTrackPtr(folderSpillTracks_[channelNumber]))
+                    return folderSpillTracks_[channelNumber];
+                else if(folderTrackOffset_ == 0 && channelNumber < folderSpillTracks_.size() && DAW::ValidateTrackPtr(folderSpillTracks_[channelNumber]))
+                    return folderSpillTracks_[channelNumber];
+                else
+                {
+                    channelNumber += folderTrackOffset_;
+                    
+                    if(channelNumber < folderSpillTracks_.size() && DAW::ValidateTrackPtr(folderSpillTracks_[channelNumber]))
+                        return folderSpillTracks_[channelNumber];
                 }
             }
         }
@@ -2101,24 +2129,87 @@ public:
         return DAW::CSurf_TrackToID(track, followMCP_);
     }
     
+    bool GetIsVCASpilled(MediaTrack* track)
+    {
+        if(vcaLeadTrack_ == nullptr && (DAW::GetTrackGroupMembership(track, "VOLUME_VCA_LEAD") != 0 || DAW::GetTrackGroupMembershipHigh(track, "VOLUME_VCA_LEAD") != 0))
+            return true;
+        else if(vcaLeadTrack_ == track)
+            return true;
+        else
+            return false;
+    }
+    
     void ToggleVCASpill(MediaTrack* track)
     {
-        if(! isVCAModeEnabled_)
+        if(currentTrackVCAFolderMode_ != 1)
             return;
         
         if(DAW::GetTrackGroupMembership(track, "VOLUME_VCA_LEAD") == 0 && DAW::GetTrackGroupMembershipHigh(track, "VOLUME_VCA_LEAD") == 0)
             return;
-               
-        auto it = find(vcaLeadTracks_.begin(), vcaLeadTracks_.end(), track);
-        
-        if(it == vcaLeadTracks_.end())
-            vcaLeadTracks_.push_back(track);
+
+        if(vcaLeadTrack_ == track)
+        {
+            if(vcaLeadTracks_.size() > 0)
+            {
+                vcaLeadTrack_ = vcaLeadTracks_.back();
+                vcaLeadTracks_.pop_back();
+            }
+            else
+                vcaLeadTrack_ = nullptr;
+        }
+        else if(vcaLeadTrack_ != nullptr)
+        {
+            vcaLeadTracks_.push_back(vcaLeadTrack_);
+            vcaLeadTrack_ = track;
+        }
         else
-            vcaLeadTracks_.erase(it, vcaLeadTracks_.end());
-        
+            vcaLeadTrack_ = track;
+       
         vcaTrackOffset_ = 0;
     }
-   
+
+    bool GetIsFolderSpilled(MediaTrack* track)
+    {
+        if(find(folderTopParentTracks_.begin(), folderTopParentTracks_.end(), track) != folderTopParentTracks_.end())
+            return true;
+        else if(DAW::GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH") == 1)
+            return true;
+        else
+            return false;
+    }
+
+    void ToggleFolderSpill(MediaTrack* track)
+    {
+        if(currentTrackVCAFolderMode_ != 2)
+            return;
+        
+        if(folderTopParentTracks_.size() == 0)
+            return;
+
+        else if(DAW::GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH") != 1)
+            return;
+        
+        if(folderParentTrack_ == track)
+        {
+            if(folderParentTracks_.size() > 0)
+            {
+                folderParentTrack_ = folderParentTracks_.back();
+                folderParentTracks_.pop_back();
+            }
+            else
+                folderParentTrack_ = nullptr;
+        }
+        else if(folderParentTrack_ != nullptr)
+        {
+            folderParentTracks_.push_back(folderParentTrack_);
+            folderParentTrack_ = track;
+        }
+        else
+            folderParentTrack_ = track;
+       
+        folderTrackOffset_ = 0;
+    }
+    
     void ToggleSynchPages()
     {
         synchPages_ = ! synchPages_;
@@ -2207,21 +2298,20 @@ public:
     
     void RebuildVCASpill()
     {   
-        if(! isVCAModeEnabled_)
+        if(currentTrackVCAFolderMode_ != 1)
             return;
     
         vcaTopLeadTracks_.clear();
         vcaSpillTracks_.clear();
-
-        MediaTrack* leadTrack = nullptr;
+        
         bitset<32> leadTrackVCALeaderGroup;
         bitset<32> leadTrackVCALeaderGroupHigh;
         
-        if(vcaLeadTracks_.size() > 0)
+        if(vcaLeadTrack_ != nullptr)
         {
-            leadTrack = vcaLeadTracks_.back();
-            leadTrackVCALeaderGroup = DAW::GetTrackGroupMembership(leadTrack, "VOLUME_VCA_LEAD");
-            leadTrackVCALeaderGroupHigh = DAW::GetTrackGroupMembershipHigh(leadTrack, "VOLUME_VCA_LEAD");
+            leadTrackVCALeaderGroup = DAW::GetTrackGroupMembership(vcaLeadTrack_, "VOLUME_VCA_LEAD");
+            leadTrackVCALeaderGroupHigh = DAW::GetTrackGroupMembershipHigh(vcaLeadTrack_, "VOLUME_VCA_LEAD");
+            vcaSpillTracks_.push_back(vcaLeadTrack_);
         }
         
         // Get Visible Tracks
@@ -2235,7 +2325,7 @@ public:
             if(DAW::GetTrackGroupMembershipHigh(track, "VOLUME_VCA_LEAD") != 0 && DAW::GetTrackGroupMembershipHigh(track, "VOLUME_VCA_FOLLOW") == 0)
                 vcaTopLeadTracks_.push_back(track);
             
-            if(leadTrack != nullptr)
+            if(vcaLeadTrack_ != nullptr)
             {
                 bool isFollower = false;
                 
@@ -2260,17 +2350,48 @@ public:
     
     void RebuildFolderTracks()
     {
-        if(! isFolderModeEnabled_)
+        if(currentTrackVCAFolderMode_ != 2)
             return;
         
-        folderTracks_.clear();
+        folderTopParentTracks_.clear();
+        folderDictionary_.clear();
+        folderSpillTracks_.clear();
+       
+        vector<vector<MediaTrack*>*> currentDepthTracks;
         
         for (int i = 1; i <= GetNumTracks(); i++)
         {
-            if(MediaTrack* track = DAW::CSurf_TrackFromID(i, followMCP_))
-                if(DAW::GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH") == 1)
-                    folderTracks_.push_back(track);
+            MediaTrack* track = DAW::CSurf_TrackFromID(i, followMCP_);
+
+            if(DAW::GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH") == 1)
+            {
+                if(currentDepthTracks.size() == 0)
+                    folderTopParentTracks_.push_back(track);
+                else
+                    currentDepthTracks.back()->push_back(track);
+                
+                folderDictionary_[track].push_back(track);
+                
+                currentDepthTracks.push_back(&folderDictionary_[track]);
+            }
+            else if(DAW::GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH") == 0 && currentDepthTracks.size() != 0)
+            {
+                currentDepthTracks.back()->push_back(track);
+            }
+            else if(DAW::GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH") < 0)
+            {
+                currentDepthTracks.back()->push_back(track);
+                
+                int folderBackTrack = -DAW::GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH");
+                
+                for(int i = 0; i < folderBackTrack && currentDepthTracks.size() > 0; i++)
+                    currentDepthTracks.pop_back();
+            }
         }
+        
+        if(folderParentTrack_ != nullptr)
+            for(auto track : folderDictionary_[folderParentTrack_])
+                folderSpillTracks_.push_back(track);
     }
     
     void EnterPage()
@@ -2654,17 +2775,32 @@ public:
             if(surface != originatingSurface)
                 surface->GetZoneManager()->HandleSelectedTrackFXMenuBank(amount);
     }
-
-    void SetAllDisplaysColor(string color)
+   
+    bool GetDoesAssociatedZoneExist(string associatedZoneName)
     {
         for(auto surface : surfaces_)
-            surface->SetAllDisplaysColor(color);
+            if(surface->GetDoesAssociatedZoneExist(associatedZoneName))
+                return true;
+        
+        return false;
     }
-    
-    void RestoreAllDisplaysColor()
+
+    void GoTrack()
     {
         for(auto surface : surfaces_)
-            surface->RestoreAllDisplaysColor();
+            surface->GetZoneManager()->GoHome();
+    }
+
+    void GoVCA()
+    {
+        for(auto surface : surfaces_)
+            surface->GetZoneManager()->GoVCA();
+    }
+
+    void GoFolder()
+    {
+        for(auto surface : surfaces_)
+            surface->GetZoneManager()->GoFolder();
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2672,30 +2808,32 @@ public:
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     bool GetSynchPages() { return trackNavigationManager_->GetSynchPages(); }
     bool GetScrollLink() { return trackNavigationManager_->GetScrollLink(); }
-    bool GetVCAMode() { return trackNavigationManager_->GetVCAMode(); }
     int  GetNumTracks() { return trackNavigationManager_->GetNumTracks(); }
     Navigator* GetMasterTrackNavigator() { return trackNavigationManager_->GetMasterTrackNavigator(); }
     Navigator* GetSelectedTrackNavigator() { return trackNavigationManager_->GetSelectedTrackNavigator(); }
     Navigator* GetFocusedFXNavigator() { return trackNavigationManager_->GetFocusedFXNavigator(); }
     Navigator* GetDefaultNavigator() { return trackNavigationManager_->GetDefaultNavigator(); }
     void AdjustTrackBank(int amount) { trackNavigationManager_->AdjustTrackBank(amount); }
-    void NextTrackVCAFolderMode(string params) { trackNavigationManager_->NextTrackVCAFolderMode(params); }
+    void AdjustVCABank(int amount) { trackNavigationManager_->AdjustVCABank(amount); }
+    void AdjustFolderBank(int amount) { trackNavigationManager_->AdjustFolderBank(amount); }
+    void NextTrackVCAFolderMode() { trackNavigationManager_->NextTrackVCAFolderMode(); }
     void ResetTrackVCAFolderMode() { trackNavigationManager_->ResetTrackVCAFolderMode(); }
     int GetCurrentTrackVCAFolderMode() { return trackNavigationManager_->GetCurrentTrackVCAFolderMode(); }
+    string GetCurrentTrackVCAFolderModeDisplay() { return trackNavigationManager_->GetCurrentTrackVCAFolderModeDisplay(); }
     Navigator* GetNavigatorForChannel(int channelNum) { return trackNavigationManager_->GetNavigatorForChannel(channelNum); }
     MediaTrack* GetTrackFromId(int trackNumber) { return trackNavigationManager_->GetTrackFromId(trackNumber); }
     int GetIdFromTrack(MediaTrack* track) { return trackNavigationManager_->GetIdFromTrack(track); }
     bool GetIsTrackVisible(MediaTrack* track) { return trackNavigationManager_->GetIsTrackVisible(track); }
+    bool GetIsVCASpilled(MediaTrack* track) { return trackNavigationManager_->GetIsVCASpilled(track); }
     void ToggleVCASpill(MediaTrack* track) { trackNavigationManager_->ToggleVCASpill(track); }
+    bool GetIsFolderSpilled(MediaTrack* track) { return trackNavigationManager_->GetIsFolderSpilled(track); }
+    void ToggleFolderSpill(MediaTrack* track) { trackNavigationManager_->ToggleFolderSpill(track); }
     void ToggleScrollLink(int targetChannel) { trackNavigationManager_->ToggleScrollLink(targetChannel); }
     void ToggleSynchPages() { trackNavigationManager_->ToggleSynchPages(); }
     MediaTrack* GetSelectedTrack() { return trackNavigationManager_->GetSelectedTrack(); }
-    void SetAutoModeIndex() { trackNavigationManager_->SetAutoModeIndex(); }
-    void NextAutoMode() { trackNavigationManager_->NextAutoMode(); }
     void NextInputMonitorMode(MediaTrack* track) { trackNavigationManager_->NextInputMonitorMode(track); }
-    string GetAutoModeDisplayName() { return trackNavigationManager_->GetAutoModeDisplayName(); }
-    string GetGlobalAutoModeDisplayName() { return trackNavigationManager_->GetGlobalAutoModeDisplayName(); }
     string GetAutoModeDisplayName(int modeIndex) { return trackNavigationManager_->GetAutoModeDisplayName(modeIndex); }
+    string GetGlobalAutoModeDisplayName() { return trackNavigationManager_->GetGlobalAutoModeDisplayName(); }
     string GetCurrentInputMonitorMode(MediaTrack* track) { return trackNavigationManager_->GetCurrentInputMonitorMode(track); }
     vector<MediaTrack*> &GetSelectedTracks() { return trackNavigationManager_->GetSelectedTracks(); }
 };
@@ -2831,6 +2969,23 @@ public:
             return make_shared<ActionContext>(actions_["NoAction"], widget, zone, params, properties);
     }
 
+    
+    shared_ptr<ActionContext> GetActionContext(string actionName, Widget* widget, shared_ptr<Zone> zone, int paramIndex)
+    {
+        if(actions_.count(actionName) > 0)
+            return make_shared<ActionContext>(actions_[actionName], widget, zone, paramIndex);
+        else
+            return make_shared<ActionContext>(actions_["NoAction"], widget, zone, paramIndex);
+    }
+
+    shared_ptr<ActionContext> GetActionContext(string actionName, Widget* widget, shared_ptr<Zone> zone, string stringParam)
+    {
+        if(actions_.count(actionName) > 0)
+            return make_shared<ActionContext>(actions_[actionName], widget, zone, stringParam);
+        else
+            return make_shared<ActionContext>(actions_["NoAction"], widget, zone, stringParam);
+    }
+
     void OnTrackSelection(MediaTrack *track)
     {
         if(pages_.size() > 0)
@@ -2876,6 +3031,26 @@ public:
             for(auto page: pages_)
                 if(page->GetSynchPages())
                     page->AdjustTrackBank(amount);
+    }
+        
+    void AdjustVCABank(Page* sendingPage, int amount)
+    {
+        if(! sendingPage->GetSynchPages())
+            sendingPage->AdjustVCABank(amount);
+        else
+            for(auto page: pages_)
+                if(page->GetSynchPages())
+                    page->AdjustVCABank(amount);
+    }
+        
+    void AdjustFolderBank(Page* sendingPage, int amount)
+    {
+        if(! sendingPage->GetSynchPages())
+            sendingPage->AdjustFolderBank(amount);
+        else
+            for(auto page: pages_)
+                if(page->GetSynchPages())
+                    page->AdjustFolderBank(amount);
     }
         
     void NextPage()

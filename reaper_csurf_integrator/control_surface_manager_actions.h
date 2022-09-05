@@ -18,7 +18,7 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -59,7 +59,7 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -84,7 +84,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -96,32 +96,32 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class SetAllDisplaysColor : public Action
+class SetXTouchDisplayColors : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
-    virtual string GetName() override { return "SetAllDisplaysColor"; }
+    virtual string GetName() override { return "SetXTouchDisplayColors"; }
     
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
-        context->GetZone()->SetAllDisplaysColor(context->GetStringParam());
+        context->GetZone()->SetXTouchDisplayColors(context->GetStringParam());
     }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class RestoreAllDisplaysColor : public Action
+class RestoreXTouchDisplayColors : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
-    virtual string GetName() override { return "RestoreAllDisplaysColor"; }
+    virtual string GetName() override { return "RestoreXTouchDisplayColors"; }
     
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
-        context->GetZone()->RestoreAllDisplaysColor();
+        context->GetZone()->RestoreXTouchDisplayColors();
     }
 };
 
@@ -272,14 +272,80 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
     {
         if(value == 0.0) return; // ignore button releases
         
-        context->GetPage()->NextTrackVCAFolderMode(context->GetStringParam());
+        context->GetPage()->NextTrackVCAFolderMode();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class GoTrack : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "GoTrack"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderMode());
+        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderModeDisplay());
+    }
+
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        context->GetPage()->GoTrack();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class GoVCA : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "GoVCA"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderMode());
+        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderModeDisplay());
+    }
+
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        context->GetPage()->GoVCA();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class GoFolder : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "GoFolder"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderMode());
+        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderModeDisplay());
+    }
+
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        context->GetPage()->GoFolder();
     }
 };
 
@@ -292,20 +358,8 @@ public:
     
     void RequestUpdate(ActionContext* context) override
     {
-        int trackVCAFolderMode = context->GetPage()->GetCurrentTrackVCAFolderMode();
-        
-        context->UpdateWidgetValue(trackVCAFolderMode);
-        
-        string folderModeStr = "";
-        
-        if(trackVCAFolderMode == 0)
-            folderModeStr = "Track";
-        else if(trackVCAFolderMode == 1)
-            folderModeStr = "VCA";
-        else if(trackVCAFolderMode == 2)
-            folderModeStr = "Folder";
-
-        context->UpdateWidgetValue(folderModeStr);
+        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderMode());
+        context->UpdateWidgetValue(context->GetPage()->GetCurrentTrackVCAFolderModeDisplay());
     }
 };
 
@@ -318,7 +372,7 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -338,7 +392,7 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -358,7 +412,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -457,7 +511,7 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -710,7 +764,7 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
     
     void Do(ActionContext* context, double value) override
@@ -718,6 +772,46 @@ public:
         if(value == 0.0) return; // ignore button releases
         
         TheManager->AdjustTrackBank(context->GetPage(), context->GetIntParam());
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class VCABank : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "VCABank"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+    }
+    
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        TheManager->AdjustVCABank(context->GetPage(), context->GetIntParam());
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class FolderBank : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "FolderBank"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+    }
+    
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        TheManager->AdjustFolderBank(context->GetPage(), context->GetIntParam());
     }
 };
 
@@ -730,7 +824,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -769,7 +863,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -789,7 +883,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -809,7 +903,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -829,7 +923,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -849,7 +943,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -869,7 +963,7 @@ public:
     
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -1004,7 +1098,7 @@ public:
      
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -1024,7 +1118,7 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override
@@ -1043,7 +1137,7 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     void Do(ActionContext* context, double value) override

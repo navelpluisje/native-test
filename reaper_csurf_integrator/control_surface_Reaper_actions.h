@@ -146,13 +146,13 @@ public:
             {
                 if(DAW::TrackFX_GetEnabled(track, context->GetSlotIndex()))
                 {
-                    context->UpdateWidgetValue(0.0);
-                    context->UpdateWidgetValue("Bypassed");
+                    context->UpdateWidgetValue(1.0);
+                    context->UpdateWidgetValue("Enabled");
                 }
                 else
                 {
-                    context->UpdateWidgetValue(1.0);
-                    context->UpdateWidgetValue("Enabled");
+                    context->UpdateWidgetValue(0.0);
+                    context->UpdateWidgetValue("Bypassed");
                 }
             }
             else
@@ -1141,7 +1141,7 @@ public:
        
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     virtual void Do(ActionContext* context, double value) override
@@ -1464,7 +1464,7 @@ public:
         
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
     }
 
     virtual void Do(ActionContext* context, double value) override
@@ -2237,7 +2237,11 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateRGBValue(0.0);
+        context->UpdateColorValue(0.0);
+        if(MediaTrack* track = context->GetTrack())
+            context->UpdateWidgetValue(context->GetPage()->GetIsVCASpilled(track));
+        else
+            context->UpdateWidgetValue(0.0);
     }
 
     virtual void Do(ActionContext* context, double value) override
@@ -2246,6 +2250,31 @@ public:
         
         if(MediaTrack* track = context->GetTrack())
             context->GetPage()->ToggleVCASpill(track);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackToggleFolderSpill : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "TrackToggleFolderSpill"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+        if(MediaTrack* track = context->GetTrack())
+            context->UpdateWidgetValue(context->GetPage()->GetIsFolderSpilled(track));
+        else
+            context->UpdateWidgetValue(0.0);
+    }
+
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        if(MediaTrack* track = context->GetTrack())
+            context->GetPage()->ToggleFolderSpill(track);
     }
 };
 
@@ -2640,9 +2669,8 @@ public:
 
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->GetPage()->SetAutoModeIndex();
-     
-        context->UpdateWidgetValue(context->GetPage()->GetAutoModeDisplayName());
+        if(MediaTrack* track = context->GetTrack())
+            context->UpdateWidgetValue(context->GetPage()->GetAutoModeDisplayName(DAW::GetMediaTrackInfo_Value(track, "I_AUTOMODE")));
     }
     
     virtual void Do(ActionContext* context, double value) override
@@ -2650,7 +2678,68 @@ public:
         if(value == 0.0)
             return;
         
-        context->GetPage()->NextAutoMode();
+        if(MediaTrack* track = context->GetTrack())
+        {
+            int autoModeIndex_ = DAW::GetMediaTrackInfo_Value(track, "I_AUTOMODE");
+            
+            if(autoModeIndex_ == 2) // skip over write mode when cycling
+                autoModeIndex_ += 2;
+            else
+                autoModeIndex_++;
+            
+            if(autoModeIndex_ > 5)
+                autoModeIndex_ = 0;
+
+            DAW::GetSetMediaTrackInfo(track, "I_AUTOMODE", &autoModeIndex_);
+
+        }
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CycleTimeline : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "CycleTimeline"; }
+
+    virtual double GetCurrentNormalizedValue(ActionContext* context) override
+    {
+        return DAW::GetSetRepeatEx(nullptr, -1);
+    }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
+    }
+    
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        DAW::GetSetRepeatEx(nullptr, ! DAW::GetSetRepeatEx(nullptr, -1));
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CycleTrackInputMonitor : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "CycleTrackInputMonitor"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+    }
+
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0)
+            return;
+
+        if(MediaTrack* track = context->GetTrack())
+            context->GetPage()->NextInputMonitorMode(track);
     }
 };
 
@@ -2669,6 +2758,48 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackVCALeaderDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "TrackVCALeaderDisplay"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(DAW::GetTrackGroupMembership(track, "VOLUME_VCA_LEAD") != 0 || DAW::GetTrackGroupMembershipHigh(track, "VOLUME_VCA_LEAD") != 0)
+                context->UpdateWidgetValue("Leader");
+            else
+                context->UpdateWidgetValue("");
+        }
+        else
+            context->UpdateWidgetValue("");
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackFolderParentDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "TrackAutoModeDisplay"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(MediaTrack* track = context->GetTrack())
+        {
+            if(DAW::GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH") == 1)
+                context->UpdateWidgetValue("Parent");
+            else
+                context->UpdateWidgetValue("");
+        }
+        else
+            context->UpdateWidgetValue("");
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class GlobalAutoModeDisplay : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -2679,28 +2810,6 @@ public:
     {
         if(MediaTrack* track = context->GetTrack())
             context->UpdateWidgetValue(context->GetPage()->GetGlobalAutoModeDisplayName());
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CycleTrackInputMonitor : public Action
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-public:
-    virtual string GetName() override { return "CycleTrackInputMonitor"; }
-
-    virtual void RequestUpdate(ActionContext* context) override
-    {
-        context->UpdateRGBValue(0.0);
-    }
-
-    virtual void Do(ActionContext* context, double value) override
-    {
-        if(value == 0.0)
-            return;
-
-        if(MediaTrack* track = context->GetTrack())
-            context->GetPage()->NextInputMonitorMode(track);
     }
 };
 
@@ -2836,31 +2945,6 @@ public:
         }
 
         context->UpdateWidgetValue(timeStr);
-    }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CycleTimeline : public Action
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-public:
-    virtual string GetName() override { return "CycleTimeline"; }
-
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
-    {
-        return DAW::GetSetRepeatEx(nullptr, -1);
-    }
-
-    virtual void RequestUpdate(ActionContext* context) override
-    {
-        context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
-    }
-    
-    virtual void Do(ActionContext* context, double value) override
-    {
-        if(value == 0.0) return; // ignore button releases
-        
-        DAW::GetSetRepeatEx(nullptr, ! DAW::GetSetRepeatEx(nullptr, -1));
     }
 };
 
