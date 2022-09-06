@@ -3,4 +3,320 @@
    uuid = "5396F291-8D4D-45F2-A469-9D44E9D79D0E"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "113F5784-6B84-40C9-8BBF-59A63B36DF54"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_action_contexts.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "103"
+            endingLineNumber = "103">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "68B7BD33-AADF-47A7-9B18-D04C034EBE7B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_action_contexts.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "45"
+            endingLineNumber = "45"
+            landmarkName = "Do(context, value)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "BB460583-70FF-4795-B632-6D0950DCC23B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_action_contexts.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "96"
+            endingLineNumber = "96">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B6BC1933-E516-4246-AA81-E40CAE9C9D9C"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_action_contexts.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "72"
+            endingLineNumber = "72"
+            landmarkName = "RequestUpdate(context)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "B6BC1933-E516-4246-AA81-E40CAE9C9D9C - 62a2e20ca0aceb35"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ReaperDecAction::Do(ActionContext*, double)"
+                  moduleName = "reaper_csurf_integrator.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/erwin/Projects/Reasonus/CSICode/reaper_csurf_integrator/control_surface_action_contexts.h"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "73"
+                  endingLineNumber = "73"
+                  offsetFromSymbolStart = "24">
+               </Location>
+               <Location
+                  uuid = "B6BC1933-E516-4246-AA81-E40CAE9C9D9C - 62a2e20ca0aceb14"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ReaperDecAction::Do(ActionContext*, double)"
+                  moduleName = "reaper_csurf_integrator.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/erwin/Projects/Reasonus/CSICode/reaper_csurf_integrator/control_surface_action_contexts.h"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "72"
+                  endingLineNumber = "72"
+                  offsetFromSymbolStart = "24">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "F328D9F8-6411-4AD3-934B-6F458B687828"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_action_contexts.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "67"
+            endingLineNumber = "67"
+            landmarkName = "RequestUpdate(context)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "F328D9F8-6411-4AD3-934B-6F458B687828 - 164f5100e87a4e4d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ReaperDecAction::RequestUpdate(ActionContext*)"
+                  moduleName = "reaper_csurf_integrator.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/erwin/Projects/Reasonus/CSICode/reaper_csurf_integrator/control_surface_action_contexts.h"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "68"
+                  endingLineNumber = "68"
+                  offsetFromSymbolStart = "24">
+               </Location>
+               <Location
+                  uuid = "F328D9F8-6411-4AD3-934B-6F458B687828 - 164f5100e87a4e2e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ReaperDecAction::RequestUpdate(ActionContext*)"
+                  moduleName = "reaper_csurf_integrator.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/erwin/Projects/Reasonus/CSICode/reaper_csurf_integrator/control_surface_action_contexts.h"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "67"
+                  endingLineNumber = "67"
+                  offsetFromSymbolStart = "24">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "6DD97099-C0DF-4B58-AF51-3C8723C416B4"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_integrator.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1607"
+            endingLineNumber = "1607"
+            landmarkName = "Manager::Init()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5CDCB3C4-113D-40BF-9CDB-E3E7D3EC7AB9"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_integrator.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "2385"
+            endingLineNumber = "2385"
+            landmarkName = "Zone::DoTouch(widget, widgetName, isUsed, value)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "1EBE7125-5EFC-401C-82B7-A5D69A9277CA"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_midi_widgets.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "310"
+            endingLineNumber = "310"
+            landmarkName = "ProcessMidiMessage(midiMessage)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "3A7D82AA-E0EB-424F-A941-4CEA30042F3D"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_integrator.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1844"
+            endingLineNumber = "1844"
+            landmarkName = "ActionContext::UpdateWidgetValue(value)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "AB87D9A8-36A9-44B5-98FD-27DB59E067C4"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_action_contexts.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "40"
+            endingLineNumber = "40"
+            landmarkName = "Do(context, value)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "9D80F53E-8C1A-4638-AAAA-C12DD7B659D4"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_action_contexts.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "91"
+            endingLineNumber = "91">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "E8CBC73B-2572-4B35-9E47-790C5032EF48"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_integrator.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1636"
+            endingLineNumber = "1636"
+            landmarkName = "TrackNavigator::GetTrack()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "47CCA50A-47E6-49E4-9AA3-1586341D3EE6"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_integrator.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "769"
+            endingLineNumber = "769"
+            landmarkName = "ProcessZoneFile(filePath, zoneManager, navigators, zones, enclosingZone)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "47CCA50A-47E6-49E4-9AA3-1586341D3EE6 - e9f1a4fcd1128d8b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ProcessZoneFile(std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, ZoneManager*, std::__1::vector&lt;Navigator*, std::__1::allocator&lt;Navigator*&gt; &gt;&amp;, std::__1::vector&lt;std::__1::shared_ptr&lt;Zone&gt;, std::__1::allocator&lt;std::__1::shared_ptr&lt;Zone&gt; &gt; &gt;&amp;, std::__1::shared_ptr&lt;Zone&gt;)"
+                  moduleName = "reaper_csurf_integrator.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/erwin/Projects/Reasonus/CSICode/reaper_csurf_integrator/control_surface_integrator.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "769"
+                  endingLineNumber = "769"
+                  offsetFromSymbolStart = "5652">
+               </Location>
+               <Location
+                  uuid = "47CCA50A-47E6-49E4-9AA3-1586341D3EE6 - e9f1a4fcd1128dac"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ProcessZoneFile(std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt;, ZoneManager*, std::__1::vector&lt;Navigator*, std::__1::allocator&lt;Navigator*&gt; &gt;&amp;, std::__1::vector&lt;std::__1::shared_ptr&lt;Zone&gt;, std::__1::allocator&lt;std::__1::shared_ptr&lt;Zone&gt; &gt; &gt;&amp;, std::__1::shared_ptr&lt;Zone&gt;)"
+                  moduleName = "reaper_csurf_integrator.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/erwin/Projects/Reasonus/CSICode/reaper_csurf_integrator/control_surface_integrator.cpp"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "770"
+                  endingLineNumber = "770"
+                  offsetFromSymbolStart = "4024">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "285A6DEA-2B92-44C5-916D-6A1F759FB4D0"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "reaper_csurf_integrator/control_surface_integrator.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "888"
+            endingLineNumber = "888"
+            landmarkName = "SetColor(params, supportsColor, supportsTrackColor, colorValues)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

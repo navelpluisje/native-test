@@ -519,6 +519,7 @@ public:
     void Activate();
     void Deactivate();
     void GoTrack();
+    void GoMasterTrack();
     void GoVCA();
     void GoFolder();
     void OnTrackDeselection();
@@ -746,6 +747,7 @@ public:
     int  GetNumChannels();
     void GoHome();
     void GoTrack();
+    void GoMasterTrack();
     void GoVCA();
     void GoFolder();
     void OnTrackSelection();
@@ -2793,6 +2795,12 @@ public:
     {
         for(auto surface : surfaces_)
             surface->GetZoneManager()->GoHome();
+    }
+
+    void GoMasterTrack()
+    {
+        for(auto surface : surfaces_)
+            surface->GetZoneManager()->GoMasterTrack();
     }
 
     void GoVCA()

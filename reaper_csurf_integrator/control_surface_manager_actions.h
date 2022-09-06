@@ -684,6 +684,30 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class GoMasterTrack : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual string GetName() override { return "GomasterTrack"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if(context->GetSurface()->GetZoneManager()->GetIsAssociatedZoneActive("MasterTrack"))
+            context->UpdateWidgetValue(1.0);
+        else
+            context->UpdateWidgetValue(0.0);
+    }
+
+    void Do(ActionContext* context, double value) override
+    {
+        if(value == 0.0) return; // ignore button releases
+        
+        context->GetSurface()->GetZoneManager()->GoAssociatedZone("MasterTrack");
+    }
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class GoSelectedTrackSend : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -769,9 +793,11 @@ public:
     
     void Do(ActionContext* context, double value) override
     {
-        if(value == 0.0) return; // ignore button releases
-        
-        TheManager->AdjustTrackBank(context->GetPage(), context->GetIntParam());
+        if(value < 0 && context-> GetRangeMinimum() < 0)
+            TheManager->AdjustTrackBank(context->GetPage(), context->GetIntParam());
+        else if(value > 0 && context-> GetRangeMinimum() >= 0)
+            TheManager->AdjustTrackBank(context->GetPage(), context->GetIntParam());
+
     }
 };
 

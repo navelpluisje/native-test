@@ -1329,73 +1329,8 @@ public:
         
         SendMidiMessage(&midiSysExData.evt);
     }
-<<<<<<< HEAD
-=======
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class FPScribbleStripMode_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-private:
-    int displayType_ = 0x02;
-    int channel_ = 0;
-    string lastModeParams_ = "";
-
-    int GetScribbleStripMode()
-    {
-        int param = 2;
-
-        if (modeParams_ != "")
-            param = stoi(modeParams_);
-
-        if (param >= 0 && param < 9)
-            return param;
-        
-        return 2;
-    }
-    
-public:
-    virtual ~FPScribbleStripMode_Midi_FeedbackProcessor() {}
-    FPScribbleStripMode_Midi_FeedbackProcessor(Midi_ControlSurface* surface, Widget* widget, int displayType, int channel) : Midi_FeedbackProcessor(surface, widget), displayType_(displayType), channel_(channel) { }
-    
-    virtual string GetName() override { return "FPScribbleStripMode_Midi_FeedbackProcessor"; }
-
-    virtual void SetValue(double value) override
-    {
-        if (lastModeParams_ == modeParams_)
-            return;
-            
-        ForceValue(value);
-    }
-    
-    virtual void ForceValue(double value) override
-    {
-        lastModeParams_ = modeParams_;
-        
-        struct
-        {
-            MIDI_event_ex_t evt;
-            char data[512];
-        }
-        midiSysExData;
-        
-        midiSysExData.evt.frame_offset = 0;
-        midiSysExData.evt.size = 0;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x06;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayType_; // Faderport8=0x02, Faderport16=0x16
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x13;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_;     // xx channel_ id
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00 + GetScribbleStripMode(); //    0x00 + value; // type of display layout
-
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
-        SendMidiMessage(&midiSysExData.evt);
-    }
->>>>>>> c5db53bd2031b5b9487e52cd3a9017bc888dc0db
-};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class QConLiteDisplay_Midi_FeedbackProcessor : public Midi_FeedbackProcessor

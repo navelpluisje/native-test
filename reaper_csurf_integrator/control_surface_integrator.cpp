@@ -1351,6 +1351,7 @@ void Manager::InitActionsDictionary()
     actions_["ToggleScrollLink"] =                  new ToggleScrollLink();
     actions_["CycleTrackVCAFolderModes"] =          new CycleTrackVCAFolderModes();
     actions_["GoTrack"] =                           new GoTrack();
+    actions_["GoMasterTrack"] =                     new GoMasterTrack();
     actions_["GoVCA"] =                             new GoVCA();
     actions_["GoFolder"] =                          new GoFolder();
     actions_["TrackVCAFolderModeDisplay"] =         new TrackVCAFolderModeDisplay();
@@ -2162,6 +2163,14 @@ void Zone::GoTrack()
                 zone->Deactivate();
 }
 
+void Zone::GoMasterTrack()
+{
+    for(auto [key, zones] : associatedZones_)
+        for(auto zone : zones)
+            if(zone->GetName() == "VCA" || zone->GetName() == "Folder")
+                zone->Deactivate();
+}
+
 void Zone::GoVCA()
 {
     for(auto [key, zones] : associatedZones_)
@@ -2776,6 +2785,12 @@ void ZoneManager::GoTrack()
 {
     if(homeZone_ != nullptr)
         homeZone_->GoTrack();
+}
+
+void ZoneManager::GoMasterTrack()
+{
+    if(homeZone_ != nullptr)
+        homeZone_->GoMasterTrack();
 }
 
 void ZoneManager::GoVCA()
