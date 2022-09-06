@@ -179,8 +179,10 @@ struct ActionTemplate
     vector<vector<string>> properties;
     bool isFeedbackInverted;
     double holdDelayAmount;
+    bool isDecrease = false;
+    bool isIncrease = false;
     
-    ActionTemplate(string action, vector<string> prams, bool isInverted, double amount) : actionName(action), params(prams), isFeedbackInverted(isInverted), holdDelayAmount(amount) {}
+    ActionTemplate(string action, vector<string> prams, bool isInverted, double amount, bool  isDec, bool isInc) : actionName(action), params(prams), isFeedbackInverted(isInverted), holdDelayAmount(amount), isDecrease(isDec), isIncrease(isInc)  {}
 };
 
 static void listZoneFiles(const string &path, vector<string> &results)
@@ -193,7 +195,7 @@ static void listZoneFiles(const string &path, vector<string> &results)
                 results.push_back(file.path().string());
 }
 
-static void GetWidgetNameAndProperties(string line, string &widgetName, string &modifier, string &touchId, bool &isFeedbackInverted, double &holdDelayAmount, bool &isProperty)
+static void GetWidgetNameAndProperties(string line, string &widgetName, string &modifier, string &touchId, bool &isFeedbackInverted, double &holdDelayAmount, bool &isProperty, bool &isDecrease, bool &isIncrease)
 {
     istringstream modified_role(line);
     vector<string> modifier_tokens;
@@ -234,6 +236,10 @@ static void GetWidgetNameAndProperties(string line, string &widgetName, string &
                 holdDelayAmount = 1.0;
             else if(modifier_tokens[i] == "Property")
                 isProperty = true;
+            else if(modifier_tokens[i] == "Decrease")
+                isDecrease = true;
+            else if(modifier_tokens[i] == "Increase")
+                isIncrease = true;
         }
     }
     
@@ -323,6 +329,39 @@ static void GetWidgets(ZoneManager* zoneManager, int numChannels, vector<string>
     results = widgets;
 }
 
+vector<rgba_color> GetColorValues(vector<string> colors)
+{
+    vector<rgba_color> colorValues;
+    
+    for(auto color : colors)
+    {
+        rgba_color colorValue;
+        
+        if(color.length() == 7)
+        {
+            regex pattern("#([0-9a-fA-F]{6})");
+            smatch match;
+            if (regex_match(color, match, pattern))
+            {
+                sscanf(match.str(1).c_str(), "%2x%2x%2x", &colorValue.r, &colorValue.g, &colorValue.b);
+                colorValues.push_back(colorValue);
+            }
+        }
+        else if(color.length() == 9)
+        {
+            regex pattern("#([0-9a-fA-F]{8})");
+            smatch match;
+            if (regex_match(color, match, pattern))
+            {
+                sscanf(match.str(1).c_str(), "%2x%2x%2x%2x", &colorValue.r, &colorValue.g, &colorValue.b, &colorValue.a);
+                colorValues.push_back(colorValue);
+            }
+        }
+    }
+    
+    return colorValues;
+}
+
 static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, vector<Navigator*> &navigators, vector<shared_ptr<Zone>> &zones, shared_ptr<Zone> enclosingZone)
 {
     int lineNumber = 0;
@@ -338,13 +377,14 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, vector<
     map<int, vector<Widget*>> valueDisplays;
     map<int, vector<string>>  modifiers;
 
-    map<int, vector<double>> accelerationValues;
-    vector<double>           defaultAccelerationValues;
-    map<int, vector<double>> rangeValues;
-    map<int, double>         stepSize;
-    map<int, vector<double>> stepValues;
-    map<int, vector<int>>    tickCounts;
-    map<int, string>         widgetModes;
+    map<int, vector<double>>        accelerationValues;
+    vector<double>                  defaultAccelerationValues;
+    map<int, vector<double>>        rangeValues;
+    map<int, double>                stepSize;
+    map<int, vector<double>>        stepValues;
+    map<int, vector<int>>           tickCounts;
+    map<int, vector<rgba_color>>    colorValues;
+    map<int, string>                widgetModes;
 
     try
     {
@@ -475,6 +515,30 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, vector<
                     
                     tickCounts[stoi(tokens[1])] = ticks;
                 }
+                else if(tokens[0] == "FXParamColors")
+                {
+                    if(tokens.size() < 3)
+                        continue;
+                       
+                    vector<string> colors;
+                    
+                    for(int i = 2; i < tokens.size(); i++)
+                        colors.push_back(tokens[i]);
+                    
+                    colorValues[stoi(tokens[1])] = GetColorValues(colors);
+                }
+                else if(tokens[0] == "FXParamTickCounts")
+                {
+                    if(tokens.size() < 3)
+                        continue;
+                       
+                    vector<int> ticks;
+                    
+                    for(int i = 2; i < tokens.size(); i++)
+                        ticks.push_back(stod(tokens[i]));
+                    
+                    tickCounts[stoi(tokens[1])] = ticks;
+                }
                 else if(tokens[0] == "FXWidgetModes")
                 {
                     if(tokens.size() < 3)
@@ -535,6 +599,9 @@ static void ProcessFXZoneFile(string filePath, ZoneManager* zoneManager, vector<
                             if(tickCounts.count(params[i][j]) > 0)
                                 context->SetTickCounts(tickCounts[params[i][j]]);
                             
+                            if(colorValues.count(params[i][j]) > 0)
+                                context->SetColorValues(colorValues[params[i][j]]);
+
                             zone->AddActionContext(valueWidgets[i][j], modifierString, context);
                         }
                         
@@ -708,6 +775,11 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
                                     if(action->holdDelayAmount != 0.0)
                                         context->SetHoldDelayAmount(action->holdDelayAmount);
                                     
+                                    if(action->isDecrease)
+                                        context->SetRange({ -2.0, 1.0 });
+                                    else if(action->isIncrease)
+                                        context->SetRange({ 0.0, 2.0 });
+
                                     string expandedModifier = regex_replace(modifier, regex("[|]"), numStr);
                                     
                                     zone->AddActionContext(widget, expandedModifier, context);
@@ -765,8 +837,10 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
                     bool isFeedbackInverted = false;
                     double holdDelayAmount = 0.0;
                     bool isProperty = false;
-                    
-                    GetWidgetNameAndProperties(tokens[0], widgetName, modifier, touchId, isFeedbackInverted, holdDelayAmount, isProperty);
+                    bool isDecrease = false;
+                    bool isIncrease = false;
+
+                    GetWidgetNameAndProperties(tokens[0], widgetName, modifier, touchId, isFeedbackInverted, holdDelayAmount, isProperty, isDecrease, isIncrease);
                     
                     if(touchId != "")
                         touchIds[widgetName] = touchId;
@@ -782,7 +856,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
                     }
                     else
                     {
-                        currentActionTemplate = make_shared<ActionTemplate>(actionName, params, isFeedbackInverted, holdDelayAmount);
+                        currentActionTemplate = make_shared<ActionTemplate>(actionName, params, isFeedbackInverted, holdDelayAmount, isDecrease, isIncrease);
                         widgetActions[widgetName][modifier].push_back(currentActionTemplate);
                     }
                 }
@@ -800,6 +874,7 @@ static void ProcessZoneFile(string filePath, ZoneManager* zoneManager, vector<Na
 void SetColor(vector<string> params, bool &supportsColor, bool &supportsTrackColor, vector<rgba_color> &colorValues)
 {
     vector<int> rawValues;
+    vector<string> hexColors;
     
     auto openCurlyBrace = find(params.begin(), params.end(), "{");
     auto closeCurlyBrace = find(params.begin(), params.end(), "}");
@@ -809,6 +884,12 @@ void SetColor(vector<string> params, bool &supportsColor, bool &supportsTrackCol
         for(auto it = openCurlyBrace + 1; it != closeCurlyBrace; ++it)
         {
             string strVal = *(it);
+            
+            if(strVal.length() > 0 && strVal[0] == '#')
+            {
+                hexColors.push_back(strVal);
+                continue;
+            }
             
             if(strVal == "Track")
             {
@@ -828,7 +909,14 @@ void SetColor(vector<string> params, bool &supportsColor, bool &supportsTrackCol
             }
         }
         
-        if(rawValues.size() % 3 == 0 && rawValues.size() > 2)
+        if(hexColors.size() > 0)
+        {
+            vector<rgba_color> colors = GetColorValues(hexColors);
+            
+            for(auto color : colors)
+                colorValues.push_back(color);
+        }
+        else if(rawValues.size() % 3 == 0 && rawValues.size() > 2)
         {
             supportsColor = true;
             
@@ -1626,7 +1714,7 @@ ActionContext::ActionContext(Action* action, Widget* widget, shared_ptr<Zone> zo
         rangeMaximum_ = 100.0;
     }
    
-    if(actionName == "Reaper" && params.size() > 1)
+    if((actionName == "Reaper" || actionName == "ReaperDec" || actionName == "ReaperInc") && params.size() > 1)
     {
         if (isdigit(params[1][0]))
         {
@@ -1741,7 +1829,7 @@ void ActionContext::UpdateColorValue(double value)
     {
         currentColorIndex_ = value == 0 ? 0 : 1;
         if(colorValues_.size() > currentColorIndex_)
-            widget_->UpdateColorValue(colorValues_[currentColorIndex_].a, colorValues_[currentColorIndex_].r, colorValues_[currentColorIndex_].g, colorValues_[currentColorIndex_].b);
+            widget_->UpdateColorValue(colorValues_[currentColorIndex_]);
     }
 }
 
@@ -1765,7 +1853,7 @@ void ActionContext::UpdateTrackColor()
     if(MediaTrack* track = zone_->GetNavigator()->GetTrack())
     {
         rgba_color color = DAW::GetTrackColor(track);
-        widget_->UpdateColorValue(color.a, color.r, color.g, color.b);
+        widget_->UpdateColorValue(color);
     }
 }
 
@@ -2366,10 +2454,10 @@ void  Widget::UpdateMode(string modeParams)
         processor->SetMode(modeParams);
 }
 
-void  Widget::UpdateColorValue(int a, int r, int g, int b)
+void  Widget::UpdateColorValue(rgba_color color)
 {
     for(auto processor : feedbackProcessors_)
-        processor->SetColorValue(a, r, g, b);
+        processor->SetColorValue(color);
 }
 
 void Widget::SetXTouchDisplayColors(string color)
@@ -2439,24 +2527,24 @@ void Midi_FeedbackProcessor::ForceMidiMessage(int first, int second, int third)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // OSC_FeedbackProcessor
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-void OSC_FeedbackProcessor::SetColorValue(int a, int r, int g, int b)
+void OSC_FeedbackProcessor::SetColorValue(rgba_color color)
 {
-    if(lastRValue_ != r)
+    if(lastColor_.r != color.r)
     {
-        lastRValue_ = r;
-        surface_->SendOSCMessage(this, oscAddress_ + "/rColor", (double)r);
+        lastColor_ = color;
+        surface_->SendOSCMessage(this, oscAddress_ + "/rColor", (double)color.r);
     }
     
-    if(lastGValue_ != g)
+    if(lastColor_.g != color.g)
     {
-        lastGValue_ = g;
-        surface_->SendOSCMessage(this, oscAddress_ + "/gColor", (double)g);
+        lastColor_ = color;
+        surface_->SendOSCMessage(this, oscAddress_ + "/gColor", (double)color.g);
     }
     
-    if(lastBValue_ != b)
+    if(lastColor_.b != color.b)
     {
-        lastBValue_ = b;
-        surface_->SendOSCMessage(this, oscAddress_ + "/bColor", (double)b);
+        lastColor_ = color;
+        surface_->SendOSCMessage(this, oscAddress_ + "/bColor", (double)color.b);
     }
 }
 
@@ -2527,9 +2615,10 @@ void ZoneManager::RequestUpdate()
     {
         if(value == false)
         {
+            rgba_color color;
             key->UpdateValue(0.0);
             key->UpdateValue("");
-            key->UpdateColorValue(255, 0, 0, 0);
+            key->UpdateColorValue(color);
         }
     }
 }

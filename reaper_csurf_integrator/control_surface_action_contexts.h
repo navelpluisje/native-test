@@ -29,20 +29,18 @@ class ReaperAction : public Action
 {
 public:
     virtual string GetName() override { return "ReaperAction"; }
-    
-    virtual double GetCurrentNormalizedValue(ActionContext* context) override
-    {
-        return DAW::GetToggleCommandState(context->GetCommandId());
-    }
-
+   
     virtual void RequestUpdate(ActionContext* context) override
     {
-        context->UpdateWidgetValue(GetCurrentNormalizedValue(context));
+        if( ! (context-> GetRangeMinimum() == -2.0 || context-> GetRangeMaximum() == 2.0))
+            context->UpdateWidgetValue(DAW::GetToggleCommandState(context->GetCommandId()));
     }
     
     virtual void Do(ActionContext* context, double value) override
     {
-        if(value != 0)
+        if(value < 0 && context-> GetRangeMinimum() < 0)
+            DAW::SendCommandMessage(context->GetCommandId());
+        else if(value > 0 && context-> GetRangeMinimum() >= 0)
             DAW::SendCommandMessage(context->GetCommandId());
     }
 };
