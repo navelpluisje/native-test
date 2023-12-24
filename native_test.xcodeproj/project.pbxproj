@@ -1,0 +1,406 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0310E4CF1EB5403C00040D1A /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0310E4C81EB5403C00040D1A /* main.cpp */; };
+		0310E4D21EB5403C00040D1A /* resource.h in Headers */ = {isa = PBXBuildFile; fileRef = 0310E4CB1EB5403C00040D1A /* resource.h */; };
+		037FB6771EB8C96C0012F4C1 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 037FB6761EB8C96C0012F4C1 /* Carbon.framework */; };
+		03C7D8BB1EB78AF500DBBD98 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03C7D8BA1EB78AF500DBBD98 /* Cocoa.framework */; };
+		AA340F252B385EB000A9E686 /* csurf_faderport.hpp in Headers */ = {isa = PBXBuildFile; fileRef = AA340F232B385EB000A9E686 /* csurf_faderport.hpp */; };
+		AA340F262B385EB000A9E686 /* csurf_faderport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA340F242B385EB000A9E686 /* csurf_faderport.cpp */; };
+		AA340F2E2B3860EB00A9E686 /* oscpkt.hh in Headers */ = {isa = PBXBuildFile; fileRef = AA340F282B3860EA00A9E686 /* oscpkt.hh */; };
+		AA340F2F2B3860EB00A9E686 /* reaper_plugin_functions.h in Headers */ = {isa = PBXBuildFile; fileRef = AA340F292B3860EA00A9E686 /* reaper_plugin_functions.h */; };
+		AA340F302B3860EB00A9E686 /* reaper_plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = AA340F2A2B3860EA00A9E686 /* reaper_plugin.h */; };
+		AA340F312B3860EB00A9E686 /* ReportLoggingEtc.h in Headers */ = {isa = PBXBuildFile; fileRef = AA340F2B2B3860EA00A9E686 /* ReportLoggingEtc.h */; };
+		AA340F322B3860EB00A9E686 /* udp.hh in Headers */ = {isa = PBXBuildFile; fileRef = AA340F2D2B3860EB00A9E686 /* udp.hh */; };
+		AA340F342B38632F00A9E686 /* csurf.h in Headers */ = {isa = PBXBuildFile; fileRef = AA340F332B38632F00A9E686 /* csurf.h */; };
+		AA340F362B3863EF00A9E686 /* localize.h in Headers */ = {isa = PBXBuildFile; fileRef = AA340F352B3863EF00A9E686 /* localize.h */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0310E4C81EB5403C00040D1A /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		0310E4CB1EB5403C00040D1A /* resource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = resource.h; sourceTree = "<group>"; };
+		03464AE01EB53E7A00EAD095 /* native_test.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = native_test.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		0352CFFE1FD95CDE002AE18C /* res.rc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = res.rc; sourceTree = "<group>"; };
+		0362B03B1FD80DD500E37C2F /* res.rc_mac_menu */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = res.rc_mac_menu; sourceTree = "<group>"; };
+		037FB6761EB8C96C0012F4C1 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		0393E6B11F7501F100BC2E2E /* handy_functions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = handy_functions.h; sourceTree = "<group>"; };
+		03C7D8BA1EB78AF500DBBD98 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		AA340F232B385EB000A9E686 /* csurf_faderport.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = csurf_faderport.hpp; sourceTree = "<group>"; };
+		AA340F242B385EB000A9E686 /* csurf_faderport.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = csurf_faderport.cpp; sourceTree = "<group>"; };
+		AA340F282B3860EA00A9E686 /* oscpkt.hh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = oscpkt.hh; sourceTree = "<group>"; };
+		AA340F292B3860EA00A9E686 /* reaper_plugin_functions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = reaper_plugin_functions.h; sourceTree = "<group>"; };
+		AA340F2A2B3860EA00A9E686 /* reaper_plugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = reaper_plugin.h; sourceTree = "<group>"; };
+		AA340F2B2B3860EA00A9E686 /* ReportLoggingEtc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReportLoggingEtc.h; sourceTree = "<group>"; };
+		AA340F2D2B3860EB00A9E686 /* udp.hh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = udp.hh; sourceTree = "<group>"; };
+		AA340F332B38632F00A9E686 /* csurf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = csurf.h; sourceTree = "<group>"; };
+		AA340F352B3863EF00A9E686 /* localize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = localize.h; sourceTree = "<group>"; };
+		AA340F372B38645000A9E686 /* WDL */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WDL; sourceTree = "<group>"; };
+		AA340F382B38671200A9E686 /* localize-import.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "localize-import.h"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		03464ADD1EB53E7A00EAD095 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				037FB6771EB8C96C0012F4C1 /* Carbon.framework in Frameworks */,
+				03C7D8BB1EB78AF500DBBD98 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		03464AD71EB53E7A00EAD095 = {
+			isa = PBXGroup;
+			children = (
+				03464AE21EB53E7A00EAD095 /* native_test */,
+				03464AE11EB53E7A00EAD095 /* Products */,
+				03ECFF841EB61A8B0034E98E /* Frameworks */,
+			);
+			indentWidth = 2;
+			sourceTree = "<group>";
+			tabWidth = 2;
+		};
+		03464AE11EB53E7A00EAD095 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				03464AE01EB53E7A00EAD095 /* native_test.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		03464AE21EB53E7A00EAD095 /* native_test */ = {
+			isa = PBXGroup;
+			children = (
+				0352CFFE1FD95CDE002AE18C /* res.rc */,
+				0362B03B1FD80DD500E37C2F /* res.rc_mac_menu */,
+				AA340F242B385EB000A9E686 /* csurf_faderport.cpp */,
+				AA340F332B38632F00A9E686 /* csurf.h */,
+				AA340F232B385EB000A9E686 /* csurf_faderport.hpp */,
+				AA340F352B3863EF00A9E686 /* localize.h */,
+				0310E4C81EB5403C00040D1A /* main.cpp */,
+				0393E6B11F7501F100BC2E2E /* handy_functions.h */,
+				0310E4CB1EB5403C00040D1A /* resource.h */,
+				AA340F222B385DE400A9E686 /* libs */,
+			);
+			path = native_test;
+			sourceTree = "<group>";
+		};
+		03ECFF841EB61A8B0034E98E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				037FB6761EB8C96C0012F4C1 /* Carbon.framework */,
+				03C7D8BA1EB78AF500DBBD98 /* Cocoa.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AA340F222B385DE400A9E686 /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				AA340F372B38645000A9E686 /* WDL */,
+				AA340F282B3860EA00A9E686 /* oscpkt.hh */,
+				AA340F292B3860EA00A9E686 /* reaper_plugin_functions.h */,
+				AA340F2A2B3860EA00A9E686 /* reaper_plugin.h */,
+				AA340F2B2B3860EA00A9E686 /* ReportLoggingEtc.h */,
+				AA340F2D2B3860EB00A9E686 /* udp.hh */,
+				AA340F382B38671200A9E686 /* localize-import.h */,
+			);
+			path = libs;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		03464ADE1EB53E7A00EAD095 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA340F342B38632F00A9E686 /* csurf.h in Headers */,
+				AA340F302B3860EB00A9E686 /* reaper_plugin.h in Headers */,
+				0310E4D21EB5403C00040D1A /* resource.h in Headers */,
+				AA340F362B3863EF00A9E686 /* localize.h in Headers */,
+				AA340F312B3860EB00A9E686 /* ReportLoggingEtc.h in Headers */,
+				AA340F252B385EB000A9E686 /* csurf_faderport.hpp in Headers */,
+				AA340F322B3860EB00A9E686 /* udp.hh in Headers */,
+				AA340F2E2B3860EB00A9E686 /* oscpkt.hh in Headers */,
+				AA340F2F2B3860EB00A9E686 /* reaper_plugin_functions.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		03464ADF1EB53E7A00EAD095 /* native_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 03464AE91EB53E7A00EAD095 /* Build configuration list for PBXNativeTarget "native_test" */;
+			buildPhases = (
+				03464ADC1EB53E7A00EAD095 /* Sources */,
+				03464ADD1EB53E7A00EAD095 /* Frameworks */,
+				03464ADE1EB53E7A00EAD095 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = native_test;
+			productName = reaper_csurf_integrator;
+			productReference = 03464AE01EB53E7A00EAD095 /* native_test.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		03464AD81EB53E7A00EAD095 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1020;
+				ORGANIZATIONNAME = Navelpluisje;
+				TargetAttributes = {
+					03464ADF1EB53E7A00EAD095 = {
+						CreatedOnToolsVersion = 8.3.2;
+						DevelopmentTeam = A6936TZNQN;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 03464ADB1EB53E7A00EAD095 /* Build configuration list for PBXProject "native_test" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				English,
+				en,
+				Base,
+			);
+			mainGroup = 03464AD71EB53E7A00EAD095;
+			productRefGroup = 03464AE11EB53E7A00EAD095 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				03464ADF1EB53E7A00EAD095 /* native_test */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		03464ADC1EB53E7A00EAD095 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0310E4CF1EB5403C00040D1A /* main.cpp in Sources */,
+				AA340F262B385EB000A9E686 /* csurf_faderport.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		03464AE71EB53E7A00EAD095 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = "$HOME/Library/Application Support/REAPER/UserPlugins";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				EXECUTABLE_EXTENSION = dylib;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					SWELL_PROVIDED_BY_APP,
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_PREPROCESS = NO;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "";
+				LD_DYLIB_INSTALL_NAME = native_test;
+				MACH_O_TYPE = mh_dylib;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		03464AE81EB53E7A00EAD095 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = "$HOME/Library/Application Support/REAPER/UserPlugins";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				EXECUTABLE_EXTENSION = dylib;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = SWELL_PROVIDED_BY_APP;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_PREPROCESS = NO;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "";
+				LD_DYLIB_INSTALL_NAME = native_test;
+				MACH_O_TYPE = mh_dylib;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		03464AEA1EB53E7A00EAD095 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = NO;
+				CLANG_WARN__EXIT_TIME_DESTRUCTORS = NO;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				DEPLOYMENT_LOCATION = YES;
+				DEVELOPMENT_TEAM = A6936TZNQN;
+				DSTROOT = "$HOME/Library/Application Support/REAPER/UserPlugins";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = /;
+				ENABLE_STRICT_OBJC_MSGSEND = NO;
+				EXECUTABLE_PREFIX = "";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				INFOPLIST_PREPROCESS = NO;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "";
+				INSTALL_PATH = /;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		03464AEB1EB53E7A00EAD095 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LIBRARY = "compiler-default";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = NO;
+				CLANG_WARN__EXIT_TIME_DESTRUCTORS = NO;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				DEPLOYMENT_LOCATION = YES;
+				DEVELOPMENT_TEAM = A6936TZNQN;
+				DSTROOT = "$HOME/Library/Application Support/REAPER/UserPlugins";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = /;
+				ENABLE_STRICT_OBJC_MSGSEND = NO;
+				EXECUTABLE_PREFIX = "";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				INFOPLIST_PREPROCESS = NO;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "";
+				INSTALL_PATH = /;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		03464ADB1EB53E7A00EAD095 /* Build configuration list for PBXProject "native_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				03464AE71EB53E7A00EAD095 /* Debug */,
+				03464AE81EB53E7A00EAD095 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		03464AE91EB53E7A00EAD095 /* Build configuration list for PBXNativeTarget "native_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				03464AEA1EB53E7A00EAD095 /* Debug */,
+				03464AEB1EB53E7A00EAD095 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 03464AD81EB53E7A00EAD095 /* Project object */;
+}
